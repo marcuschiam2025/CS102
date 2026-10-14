@@ -21,8 +21,8 @@ public class main {
                     fileHandlings.unzip(filePath + "/" + file.getName(), "unzippedFolder");
 
                     MissingNameOrEmail.catchMissingNames(filePath + "/" + file.getName());
-                    Path pathToDelete= Paths.get("unzippedFolder");
-                    deleteFolder(pathToDelete);
+                    // Path pathToDelete = Paths.get("unzippedFolder");
+                    // deleteFolder(pathToDelete);
                 } catch (Exception e) {
                     // TODO: handle exception
                     e.printStackTrace();
@@ -35,20 +35,21 @@ public class main {
         }
 
     }
-public static void deleteFolder(Path folder) throws IOException {
-    if (Files.exists(folder)) {
-        try (var paths = Files.walk(folder)) {
-            paths.sorted(Comparator.reverseOrder())
-                 .forEach(path -> {
-                     try {
-                         Files.delete(path);
-                     } catch (IOException e) {
-                         throw new RuntimeException(e);
-                     }
-                 });
+
+    public static void deleteFolder(Path folder) throws IOException {
+        if (Files.exists(folder)) {
+            try (var paths = Files.walk(folder)) {
+                paths.sorted(Comparator.reverseOrder())
+                        .forEach(path -> {
+                            try {
+                                Files.delete(path);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+            }
         }
     }
-}
     // public static void loopFile(ArrayList<FilesClass> arrayOfFiles, String
     // filePath) {
 
