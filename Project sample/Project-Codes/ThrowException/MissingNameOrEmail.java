@@ -11,8 +11,9 @@ import fileHandling.fileHandlings;
 
 
 public class MissingNameOrEmail{
-    public static void catchMissingNames(String filePath) throws MissingNameException, MissingEmailException {
+    public static ArrayList<Exception> catchMissingNames(String filePath) throws MissingNameException, MissingEmailException {
         fileHandlings fileHandling = new fileHandlings();
+        ArrayList<Exception> arrayOfExceptions = new ArrayList<>();
         try {
             Path start = Paths.get("unzippedFolder");
             Files.walk(start)
@@ -23,14 +24,14 @@ public class MissingNameOrEmail{
                             if (i == 1) {
                                 String name = stringsOfRows.get(i);
                                 if (name.length() <= 10) {
-                                    System.out.println(filePath + " " +path + " has no name");
-                                    throw new MissingNameException(name + " does not have name inside the file");
+                                    System.out.println(path + " has no name");
+                                    arrayOfExceptions.add(new MissingNameException(name + " does not have name inside the file"));
                                 }
                             } else if (i == 2) {
                                 String name = stringsOfRows.get(i);
                                 if (name.length() <= 15) {
-                                    System.out.println( filePath + " " +path +  " has no email");
-                                    throw new MissingEmailException(name + " does not have email inside the file");
+                                    System.out.println( path +  " has no email");
+                                    arrayOfExceptions.add(new MissingEmailException(name + " does not have email inside the file"));
                                 }
                             }
                         }
@@ -39,5 +40,7 @@ public class MissingNameOrEmail{
         } catch (Exception e) {
             e.printStackTrace();
         }
+                        return  arrayOfExceptions;
+
     }
 }

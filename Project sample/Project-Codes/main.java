@@ -18,11 +18,11 @@ public class main {
             ArrayList<FilesClass> itemsInside = fileHandlings.viewFilesAndFolders("../student-submission");
             itemsInside.forEach(file -> {
                 try {
-                    fileHandlings.unzip(filePath + "/" + file.getName(), "unzippedFolder");
+                    fileHandlings.unzip(filePath + "/" + file.getName(), "unzippedFolder/" + file.getName());
 
-                    MissingNameOrEmail.catchMissingNames(filePath + "/" + file.getName());
-                    Path pathToDelete = Paths.get("unzippedFolder");
-                    deleteFolder(pathToDelete);
+                    ArrayList<Exception> arrayListOfErrors= MissingNameOrEmail.catchMissingNames(filePath + "/" + file.getName());
+                    // Path pathToDelete = Paths.get("unzippedFolder");
+                    // deleteFolder(pathToDelete);
                 } catch (Exception e) {
                     // TODO: handle exception
                     e.printStackTrace();
@@ -65,4 +65,19 @@ public class main {
         // }
         // }
     }
+    // public static void loopFile(ArrayList<FilesClass> arrayOfFiles, String
+    // filePath) {
+
+    // for (int i = 0; i < arrayOfFiles.size(); i++) {
+    // System.out.println("Parent folder: " + arrayOfFiles.get(i).getParentName());
+    // System.out.println(arrayOfFiles.get(i).getName() + " " +
+    // arrayOfFiles.get(i).getClass());
+
+    // if (arrayOfFiles.get(i) instanceof Folder) {
+    // Folder file = (Folder) arrayOfFiles.get(i);
+    // ArrayList<FilesClass> itemsInsideFile = file.retrieveFilesInsideFolder();
+    // loopFile(itemsInsideFile, filePath);
+    // }
+    // }
+    // }
 }
