@@ -12,8 +12,13 @@ import Validations.FolderNameChecker;
 import fileHandling.fileHandlings;
 
 public class FileStructure {
-    public static ArrayList<Exception> wrongFileStructure(String filePath) {
+    public static ArrayList<Exception> wrongFileStructureInternal (String filePath){
         ArrayList<Exception> arrayOfExceptions = new ArrayList<>();
+        
+        return  arrayOfExceptions;
+    }
+    public static ArrayList<Exception> wrongFileStructure(String filePath) {
+        ArrayList<Exception> arrayOfExceptions = wrongFileStructure(filePath);
 
         fileHandlings fileHandling = new fileHandlings();
 
@@ -28,7 +33,18 @@ public class FileStructure {
                         int sizeOfSubmimttedFolder = folders.length - 2;
                         stringsOfRows.forEach(valuesOfPath -> {
                             String[] correctPathSplitToFilesAndFolders = valuesOfPath.split("/");
-                            if (correctPathSplitToFilesAndFolders[correctPathSplitToFilesAndFolders.length - 1]
+                            if (sameParentFolder(pathString, valuesOfPath)) {
+                                    String expectedName = Paths.get(valuesOfPath).getFileName().toString();
+
+                                    String submittedName = Paths.get(pathString).getFileName().toString();
+
+                                    if (!expectedName.equals(submittedName)) {
+                                        System.out.println(
+                                                "Expected file: " + expectedName
+                                                        + ", but found: " + submittedName);
+                                    }
+                                }
+                                else if (correctPathSplitToFilesAndFolders[correctPathSplitToFilesAndFolders.length - 1]
                                     .equals(folders[folders.length - 1])) {
                                 if (correctPathSplitToFilesAndFolders.length < sizeOfSubmimttedFolder) {
                                     for (int i = 2; i < folders.length; i++) {
@@ -47,17 +63,19 @@ public class FileStructure {
                                         if (isInside == false) {
                                             arrayOfExceptions.add(new MissingFileException(
                                                     "File/folder, " + correctPathSplitToFilesAndFolders[i]
-                                                            + " is missing from " + folders[1] ));
+                                                            + " is missing from " + folders[1]));
                                             System.out.println("File/folder, " + correctPathSplitToFilesAndFolders[i]
-                                                    + " is missing from " + folders[1] );
+                                                    + " is missing from " + folders[1]);
                                         }
                                     }
                                 } else {
                                     for (int i = 2; i < folders.length; i++) {
                                         if (i == 2) {
                                             if (!FolderNameChecker.FolderName(folders[i])) {
-                                                System.out.println("Folder "+folders[i]+" have to be renamed to username " + filePath);
-                                                 arrayOfExceptions.add(new FolderNameException("Folder have to be renamed to username " + folders[i]));
+                                                System.out.println("Folder " + folders[i]
+                                                        + " have to be renamed to username " + filePath);
+                                                arrayOfExceptions.add(new FolderNameException(
+                                                        "Folder have to be renamed to username " + folders[i]));
                                             }
                                         } else {
                                             boolean isInside = checkWhetherItsInside(folders[i],
@@ -85,6 +103,18 @@ public class FileStructure {
             e.printStackTrace();
         }
         return arrayOfExceptions;
+    }
+
+    public static boolean sameParentFolder(
+            String expectedPath,
+            String submittedPath) {
+
+        Path expected = Paths.get(expectedPath);
+        Path submitted = Paths.get(submittedPath);
+
+        return expected.getParent() != null
+                && submitted.getParent() != null
+                && expected.getParent().equals(submitted.getParent());
     }
 
     public static Boolean checkWhetherItsInside(String fileName, String[] foldersWithFilesInside) {

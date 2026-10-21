@@ -20,8 +20,7 @@ public class main {
                 try {
                     fileHandlings.unzip(filePath + "/" + file.getName(), "unzippedFolder/" + file.getName());
 
-                    ArrayList<Exception> arrayListOfErrors= MissingNameOrEmail.catchMissingNames("unzippedFolder
-                    /" + file.getName());
+                    ArrayList<Exception> arrayListOfErrors= MissingNameOrEmail.catchMissingNames("unzippedFolder/" + file.getName());
                     // Path pathToDelete = Paths.get("unzippedFolder");
                     // deleteFolder(pathToDelete);
                 } catch (Exception e) {
