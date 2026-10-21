@@ -7,11 +7,15 @@ import java.util.ArrayList;
 
 import OwnExceptions.MissingEmailException;
 import OwnExceptions.MissingNameException;
+import ThrowException.StructureChecker;
 import fileHandling.fileHandlings;
 
 public class MissingNameOrEmail {
     public static ArrayList<Exception> catchMissingNames(String filePath)
             throws MissingNameException, MissingEmailException {
+
+public class MissingNameOrEmail{
+    public static ArrayList<Exception> catchMissingNames(String filePath) throws MissingNameException, MissingEmailException {
         fileHandlings fileHandling = new fileHandlings();
         ArrayList<Exception> arrayOfExceptions = FileStructure.wrongFileStructure(filePath);
         try {

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 import ThrowException.MissingNameOrEmail;
+import ThrowException.StructureChecker;
 import fileClasses.FilesClass;
 import fileClasses.Folder;
 import fileHandling.*;
@@ -49,6 +50,21 @@ public class main {
                         });
             }
         }
+        // public static void loopFile(ArrayList<FilesClass> arrayOfFiles, String
+        // filePath) {
+
+        // for (int i = 0; i < arrayOfFiles.size(); i++) {
+        // System.out.println("Parent folder: " + arrayOfFiles.get(i).getParentName());
+        // System.out.println(arrayOfFiles.get(i).getName() + " " +
+        // arrayOfFiles.get(i).getClass());
+
+        // if (arrayOfFiles.get(i) instanceof Folder) {
+        // Folder file = (Folder) arrayOfFiles.get(i);
+        // ArrayList<FilesClass> itemsInsideFile = file.retrieveFilesInsideFolder();
+        // loopFile(itemsInsideFile, filePath);
+        // }
+        // }
+        // }
     }
     // public static void loopFile(ArrayList<FilesClass> arrayOfFiles, String
     // filePath) {
