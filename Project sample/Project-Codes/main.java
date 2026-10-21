@@ -18,9 +18,9 @@ public class main {
             ArrayList<FilesClass> itemsInside = fileHandlings.viewFilesAndFolders("../student-submission");
             itemsInside.forEach(file -> {
                 try {
-                    fileHandlings.unzip(filePath + "/" + file.getName(), "unzippedFolder");
+                    fileHandlings.unzip(filePath + "/" + file.getName(), "unzippedFolder/" + file.getName());
 
-                    MissingNameOrEmail.catchMissingNames(filePath + "/" + file.getName());
+                    ArrayList<Exception> arrayListOfErrors= MissingNameOrEmail.catchMissingNames(filePath + "/" + file.getName());
                     // Path pathToDelete = Paths.get("unzippedFolder");
                     // deleteFolder(pathToDelete);
                 } catch (Exception e) {
