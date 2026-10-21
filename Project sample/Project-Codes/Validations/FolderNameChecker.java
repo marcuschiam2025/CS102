@@ -5,13 +5,15 @@ import java.util.regex.Pattern;
 import OwnExceptions.FolderNameException;
 
 public class FolderNameChecker {
-    public static void FolderName(String filepath) throws FolderNameException{
+    public static boolean FolderName(String filepath){
         String[] names = filepath.split("/");
 
-        if(Pattern.matches("^[A-Za-z]+[.][0-9]{4}$", names[1]) || Pattern.matches("^[A-Za-z]+[.][A-Za-z]+[.][0-9]{4}$", names[1])){
+
+        if(Pattern.matches("^[A-Za-z]+[.][0-9]{4}$", names[0]) || Pattern.matches("^[A-Za-z]+[.][A-Za-z]+[.][0-9]{4}$", names[0])){
             System.out.println("Folder name correct");
+            return true;
         }else{
-            throw new FolderNameException("Folder name is incorrect");
+            return false;
         }
     }
 }

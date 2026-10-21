@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 import ThrowException.MissingNameOrEmail;
+import ThrowException.StructureChecker;
 import fileClasses.FilesClass;
 import fileClasses.Folder;
 import fileHandling.*;
@@ -20,7 +21,8 @@ public class main {
                 try {
                     fileHandlings.unzip(filePath + "/" + file.getName(), "unzippedFolder/" + file.getName());
 
-                    ArrayList<Exception> arrayListOfErrors= MissingNameOrEmail.catchMissingNames(filePath + "/" + file.getName());
+                    ArrayList<Exception> arrayListOfErrors= MissingNameOrEmail.catchMissingNames("unzippedFolder/" + file.getName());
+                    StructureChecker.Structurecheck("unzippedFolder/" + file.getName());
                     // Path pathToDelete = Paths.get("unzippedFolder");
                     // deleteFolder(pathToDelete);
                 } catch (Exception e) {
