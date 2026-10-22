@@ -486,7 +486,7 @@ public class StructureChecker {
 
     public static ArrayList<Exception> Structurecheck(String FilePath) {
 
-        ArrayList<Exception> exceptions = new ArrayList<>();
+        ArrayList<Exception> exceptions = FileStructure.wrongFileStructure(FilePath);
 
         // Step 1: Unzip the correct structure
         try {
@@ -602,7 +602,7 @@ public class StructureChecker {
         } catch (Exception e) {
             exceptions.add(new Exception(
                 "Unable to read the correct structure: "
-                + e.getMessage()
+                + e.getMessage() + " for " + studentRoot.getFileName()
             ));
             return exceptions;
         }
@@ -634,10 +634,10 @@ public class StructureChecker {
         for (String path : expected) {
 
             if (!actual.contains(path)) {
-                System.out.println("MISSING: " + path);
+                System.out.println("MISSING: " + path + " for " + FilePath);
 
                 exceptions.add(new Exception(
-                    "MISSING: " + path
+                    "MISSING: " + path + " for " + FilePath
                 ));
             }
         }
@@ -646,10 +646,10 @@ public class StructureChecker {
         for (String path : actual) {
 
             if (!expected.contains(path)) {
-                System.out.println("EXTRA: " + path);
+                System.out.println("EXTRA: " + path + " for " + FilePath);
 
                 exceptions.add(new Exception(
-                    "EXTRA: " + path
+                    "EXTRA: " + path + " for " + FilePath
                 ));
             }
         }

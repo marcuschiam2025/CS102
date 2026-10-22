@@ -12,13 +12,9 @@ import Validations.FolderNameChecker;
 import fileHandling.fileHandlings;
 
 public class FileStructure {
-    public static ArrayList<Exception> wrongFileStructureInternal (String filePath){
-        ArrayList<Exception> arrayOfExceptions = new ArrayList<>();
-        
-        return  arrayOfExceptions;
-    }
+
     public static ArrayList<Exception> wrongFileStructure(String filePath) {
-        ArrayList<Exception> arrayOfExceptions = wrongFileStructure(filePath);
+        ArrayList<Exception> arrayOfExceptions = new ArrayList<>();
 
         fileHandlings fileHandling = new fileHandlings();
 
@@ -33,18 +29,7 @@ public class FileStructure {
                         int sizeOfSubmimttedFolder = folders.length - 2;
                         stringsOfRows.forEach(valuesOfPath -> {
                             String[] correctPathSplitToFilesAndFolders = valuesOfPath.split("/");
-                            if (sameParentFolder(pathString, valuesOfPath)) {
-                                    String expectedName = Paths.get(valuesOfPath).getFileName().toString();
-
-                                    String submittedName = Paths.get(pathString).getFileName().toString();
-
-                                    if (!expectedName.equals(submittedName)) {
-                                        System.out.println(
-                                                "Expected file: " + expectedName
-                                                        + ", but found: " + submittedName);
-                                    }
-                                }
-                                else if (correctPathSplitToFilesAndFolders[correctPathSplitToFilesAndFolders.length - 1]
+                  if (correctPathSplitToFilesAndFolders[correctPathSplitToFilesAndFolders.length - 1]
                                     .equals(folders[folders.length - 1])) {
                                 if (correctPathSplitToFilesAndFolders.length < sizeOfSubmimttedFolder) {
                                     for (int i = 2; i < folders.length; i++) {
