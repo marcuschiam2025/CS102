@@ -33,13 +33,15 @@ public class SubmissionFixer {
         //    for the student's folder.
         JunkFileCleaner.clean(root, messages);
 
-        // 1. Rename a wrongly named top-level folder.
-        FolderNameFixer.fix(root, username, messages);
-
-        // 2. Move question folders into the username folder.
+        // 1. Move question folders into the username folder.
+        //    This must run before step 2, otherwise Q1 could be
+        //    mistaken for a wrongly named folder.
         if (!HierarchyFixer.fix(root, usernameFolder, QUESTIONS, messages)) {
             return messages;
         }
+
+        // 2. Rename a wrongly named top-level folder.
+        FolderNameFixer.fix(root, username, QUESTIONS, messages);
 
         if (!usernameFolder.isDirectory()) {
             messages.add("Username folder not found. "
