@@ -27,6 +27,9 @@ public class SubmissionFixer {
 
         File usernameFolder = new File(root, username);
 
+        // 0. Remove junk files first, so a __MACOSX folder is not mistaken for the student's folder.
+        JunkFileCleaner.clean(root, messages);
+
         // 1. Rename a wrongly named top-level folder.
         FolderNameFixer.fix(root, username, messages);
 
