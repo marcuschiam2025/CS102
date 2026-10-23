@@ -8,34 +8,45 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 public class HeaderFixer {
-    // A line like " * Name: Ping Lee": optional spaces, optional *, then "Name" and ":" (any case)
-    private static final Pattern NAME_LINE = Pattern.compile("(?im)^\\s*\\*?\\s*Name\\s*:.*$");
+    // A line like " * Name: Ping Lee": optional spaces, optional *,
+    // then "Name" and ":" (any case)
+    private static final Pattern NAME_LINE =
+            Pattern.compile("(?im)^\\s*\\*?\\s*Name\\s*:.*$");
 
-    // A line like " * Email ID: ping.lee.2023", with at least one space between "Email" and "ID"
-    private static final Pattern EMAIL_LINE = Pattern.compile("(?im)^\\s*\\*?\\s*Email\\s+ID\\s*:.*$");
+    // A line like " * Email ID: ping.lee.2023", with at least one space
+    // between "Email" and "ID"
+    private static final Pattern EMAIL_LINE =
+            Pattern.compile("(?im)^\\s*\\*?\\s*Email\\s+ID\\s*:.*$");
 
-    public static void fix(File submissionFolder, String username, String studentName,
-            ArrayList<String> messages) {
+    private static final String COMMENT_START = "/*";
+    private static final String COMMENT_END = "*/";
+    private static final int NOT_FOUND = -1;
 
+    public static void fix(File submissionFolder, String username,
+            String studentName, ArrayList<String> messages) {
         ArrayList<File> javaFiles = new ArrayList<>();
         findJavaFiles(submissionFolder, javaFiles);
 
         for (File javaFile : javaFiles) {
             try {
-                String result = repairJavaHeader(javaFile, username, studentName);
+                String result = repairJavaHeader(javaFile, username,
+                        studentName);
 
                 if (result != null) {
                     messages.add(javaFile.getName() + ": " + result);
                 }
-            } catch (FileNotFoundException e) {
-                messages.add("Failed to repair " + javaFile + ": " + e.getMessage());
+            } catch (FileNotFoundException exception) {
+                messages.add("Failed to repair " + javaFile + ": "
+                        + exception.getMessage());
             }
         }
     }
 
     // Adds every .java file in the folder and its subfolders to the list
-    private static void findJavaFiles(File folder, ArrayList<File> javaFiles) {
+    private static void findJavaFiles(File folder,
+            ArrayList<File> javaFiles) {
         File[] items = folder.listFiles();
 
         if (items == null) {
@@ -43,7 +54,9 @@ public class HeaderFixer {
         }
 
         for (File item : items) {
-            if (item.isFile() && item.getName().toLowerCase().endsWith(".java")) {
+            String name = item.getName().toLowerCase();
+
+            if (item.isFile() && name.endsWith(".java")) {
                 javaFiles.add(item);
             } else if (item.isDirectory()) {
                 findJavaFiles(item, javaFiles);
@@ -52,48 +65,51 @@ public class HeaderFixer {
     }
 
     // Returns a message describing the fix, or null if nothing was changed
-    public static String repairJavaHeader(File javaFile, String username, String studentName)
-            throws FileNotFoundException {
-
+    public static String repairJavaHeader(File javaFile, String username,
+            String studentName) throws FileNotFoundException {
         String content = readWholeFile(javaFile);
+        String nameLine = " * Name: " + studentName;
+        String emailLine = " * Email ID: " + username;
 
-        // Skip blank space at the start, then expect the header comment /* ... */
+        // Skip blank space at the start, then expect the header comment
         int start = 0;
-        while (start < content.length() && Character.isWhitespace(content.charAt(start))) {
+        while (start < content.length()
+                && Character.isWhitespace(content.charAt(start))) {
             start++;
         }
 
-        int end = -1;
-        if (content.startsWith("/*", start)) {
-            end = content.indexOf("*/", start + 2);
+        int end = NOT_FOUND;
+        if (content.startsWith(COMMENT_START, start)) {
+            end = content.indexOf(COMMENT_END,
+                    start + COMMENT_START.length());
         }
 
-        if (end == -1) {
-            String header = "/*\n"
-                    + " * Name: " + studentName + "\n"
-                    + " * Email ID: " + username + "\n"
-                    + " */";
+        if (end == NOT_FOUND) {
+            String header = COMMENT_START + "\n"
+                    + nameLine + "\n"
+                    + emailLine + "\n"
+                    + " " + COMMENT_END;
             writeWholeFile(javaFile, header + "\n\n" + content);
             return "Added missing student header.";
         }
 
-        String comment = content.substring(0, end + 2);
+        String comment = content.substring(0, end + COMMENT_END.length());
         String updatedComment = comment;
         boolean changed = false;
 
         if (NAME_LINE.matcher(updatedComment).find()) {
             updatedComment = NAME_LINE.matcher(updatedComment)
-                    .replaceFirst(Matcher.quoteReplacement(" * Name: " + studentName));
+                    .replaceFirst(Matcher.quoteReplacement(nameLine));
         } else {
-            updatedComment = insertBeforeClosing(updatedComment, " * Name: " + studentName);
+            updatedComment = insertBeforeClosing(updatedComment, nameLine);
             changed = true;
         }
 
         if (EMAIL_LINE.matcher(updatedComment).find()) {
             updatedComment = EMAIL_LINE.matcher(updatedComment)
-                    .replaceFirst(Matcher.quoteReplacement(" * Email ID: " + username));
+                    .replaceFirst(Matcher.quoteReplacement(emailLine));
         } else {
-            updatedComment = insertBeforeClosing(updatedComment, " * Email ID: " + username);
+            updatedComment = insertBeforeClosing(updatedComment, emailLine);
             changed = true;
         }
 
@@ -102,7 +118,8 @@ public class HeaderFixer {
         }
 
         if (changed) {
-            writeWholeFile(javaFile, updatedComment + content.substring(comment.length()));
+            String rest = content.substring(comment.length());
+            writeWholeFile(javaFile, updatedComment + rest);
             return "Fixed student name/email header.";
         }
 
@@ -110,27 +127,36 @@ public class HeaderFixer {
     }
 
     // Adds a line just before the closing */ of the comment
-    private static String insertBeforeClosing(String comment, String newLine) {
-        int closingPosition = comment.lastIndexOf("*/");
+    private static String insertBeforeClosing(String comment,
+            String newLine) {
+        int closingPosition = comment.lastIndexOf(COMMENT_END);
         return comment.substring(0, closingPosition)
                 + newLine + "\n "
                 + comment.substring(closingPosition);
     }
 
-    // Reads the file into one String, keeping its line endings exactly as they are
-    private static String readWholeFile(File file) throws FileNotFoundException {
+    // Reads the file into one String, keeping its line endings exactly
+    private static String readWholeFile(File file)
+            throws FileNotFoundException {
         Scanner sc = new Scanner(file);
-        sc.useDelimiter("\\A"); // "\\A" only matches the start of the file, so next() returns everything
+
+        // "\\A" only matches the start of the file,
+        // so next() returns everything
+        sc.useDelimiter("\\A");
+
         String content = "";
         if (sc.hasNext()) {
             content = sc.next();
         }
+
         sc.close();
         return content;
     }
 
-    private static void writeWholeFile(File file, String content) throws FileNotFoundException {
-        PrintStream writer = new PrintStream(new FileOutputStream(file, false));
+    private static void writeWholeFile(File file, String content)
+            throws FileNotFoundException {
+        PrintStream writer = new PrintStream(new FileOutputStream(file,
+                false));
         writer.print(content);
         writer.close();
     }

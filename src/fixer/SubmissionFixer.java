@@ -2,10 +2,12 @@ package fixer;
 
 import java.io.File;
 import java.util.ArrayList;
+
 public class SubmissionFixer {
     private static final String[] QUESTIONS = { "Q1", "Q2", "Q3" };
 
-    public static ArrayList<String> repairSubmission(String zipFilePath, String extractedDirectory) {
+    public static ArrayList<String> repairSubmission(String zipFilePath,
+            String extractedDirectory) {
         ArrayList<String> messages = new ArrayList<>();
 
         String username = UsernameResolver.getUsername(zipFilePath);
@@ -27,7 +29,8 @@ public class SubmissionFixer {
 
         File usernameFolder = new File(root, username);
 
-        // 0. Remove junk files first, so a __MACOSX folder is not mistaken for the student's folder.
+        // 0. Remove junk files first, so a __MACOSX folder is not mistaken
+        //    for the student's folder.
         JunkFileCleaner.clean(root, messages);
 
         // 1. Rename a wrongly named top-level folder.
@@ -39,7 +42,8 @@ public class SubmissionFixer {
         }
 
         if (!usernameFolder.isDirectory()) {
-            messages.add("Username folder not found. Please check the submission.");
+            messages.add("Username folder not found. "
+                    + "Please check the submission.");
             return messages;
         }
 

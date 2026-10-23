@@ -1,24 +1,30 @@
 package fixer;
 
 import java.io.File;
-public class UsernameResolver {
 
-    // e.g. 2023-2024-fen.lai.2022.zip -> fen.lai.2022, or null if the name has no username part
+public class UsernameResolver {
+    private static final String ZIP_EXTENSION = ".zip";
+    private static final String SEPARATOR = "-";
+    private static final int NOT_FOUND = -1;
+
+    // e.g. 2023-2024-fen.lai.2022.zip -> fen.lai.2022,
+    // or null if the name has no username part
     public static String getUsername(String zipFilePath) {
         String zipName = new File(zipFilePath).getName();
 
-        if (zipName.toLowerCase().endsWith(".zip")) {
-            zipName = zipName.substring(0, zipName.length() - 4);
+        if (zipName.toLowerCase().endsWith(ZIP_EXTENSION)) {
+            int nameLength = zipName.length() - ZIP_EXTENSION.length();
+            zipName = zipName.substring(0, nameLength);
         }
 
         // The username comes after the second "-"
-        int firstDash = zipName.indexOf("-");
-        if (firstDash == -1) {
+        int firstDash = zipName.indexOf(SEPARATOR);
+        if (firstDash == NOT_FOUND) {
             return null;
         }
 
-        int secondDash = zipName.indexOf("-", firstDash + 1);
-        if (secondDash == -1) {
+        int secondDash = zipName.indexOf(SEPARATOR, firstDash + 1);
+        if (secondDash == NOT_FOUND) {
             return null;
         }
 
@@ -32,7 +38,8 @@ public class UsernameResolver {
 
     // e.g. fen.lai.2022 -> Fen Lai (the last part, the year, is left out)
     public static String getStudentName(String username) {
-        String[] nameParts = username.split("\\."); // "\\." means split on a real dot
+        // "\\." means split on a real dot
+        String[] nameParts = username.split("\\.");
         String studentName = "";
 
         for (int i = 0; i < nameParts.length - 1; i++) {

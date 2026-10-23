@@ -113,7 +113,8 @@ public class fileHandlings {
     public static void deleteFolder(File folder) {
         File[] items = folder.listFiles();
 
-        // A folder must be empty before it can be deleted, so delete what is inside first
+        // A folder must be empty before it can be deleted,
+        // so delete what is inside first
         if (items != null) {
             for (File item : items) {
                 deleteFolder(item);
