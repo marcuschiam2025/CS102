@@ -74,11 +74,18 @@ import java.nio.file.*;
 // }
 
 public class TestPaper {
+    private static String testerFolder = "Project sample/TesterFiles";
+    private static int timeLimitSeconds = 5;
+
+    private static String getTesterFolderShort() {
+        return testerFolder.replaceAll(".+/", "");
+    }
+
     private static void copyQuestionFile(Path questionCopyPath, String questionName) throws IOException {
         File questionCopyFile = Files.createFile(questionCopyPath).toFile();
 
         PrintStream ps = new PrintStream(questionCopyFile);
-        ps.println("package TesterFiles." + questionName + ";");
+        ps.println("package " + getTesterFolderShort() + "." + questionName + ";");
 
         File questionFile = new File("Submissions/" + questionName.replaceAll("(?<=Q\\d+).+", "") + "/" + questionName + ".java");
         Scanner sc = new Scanner(questionFile);
@@ -216,7 +223,8 @@ public class TestPaper {
                 ArrayList<String> commands = new ArrayList<>();
                 String testerName = testerFile.getName();
                 commands.add("java");
-                commands.add("TesterFiles/" + testerFile.getParent().replaceAll("TesterFiles\\\\", "") + "/" + testerName);
+                // commands.add("TesterFiles/" + testerFile.getParent().replaceAll("TesterFiles\\\\", "") + "/" + testerName);
+                commands.add(testerFolder + "/" + testerFile.getParent().replaceAll(testerFolder + "\\\\", "") + "/" + testerName);
 
                 questionPb.command(commands);
 
@@ -263,10 +271,10 @@ public class TestPaper {
     public static GradingResult testPaper() {
         GradingResult gradingResult = new GradingResult();
 
-        File testerFilesFolder = new File("TesterFiles");
+        File testerFilesFolder = new File(testerFolder);
         File[] questionFolders = testerFilesFolder.listFiles();
         List<File> existingQuestionFiles = new ArrayList<>();
-        Path questionTesterPath = FileSystems.getDefault().getPath("TesterFiles", "QuestionTester.java");
+        Path questionTesterPath = FileSystems.getDefault().getPath(testerFolder, "QuestionTester.java");
         File questionTester = null;
         List<File[]> questionTesters = new ArrayList<>();
 
@@ -280,7 +288,7 @@ public class TestPaper {
 
         try (PrintStream ps = new PrintStream(questionTester);) {
             List<File[]> questionTesterFolders = new ArrayList<>();
-            ps.println("package TesterFiles;");
+            ps.println("package " + getTesterFolderShort() + ";");
 
             for (File questionFolder : questionFolders) {
                 String questionName = questionFolder.getName();
@@ -290,12 +298,12 @@ public class TestPaper {
                     questionTesters.add(testerFiles);
 
                     // Path questionFile = FileSystems.getDefault().getPath("Submissions", questionName.replaceAll("(?<=Q\\d+).+", ""), questionName + ".java");
-                    Path questionCopyPath = FileSystems.getDefault().getPath("TesterFiles", questionName, questionName + ".java");
+                    Path questionCopyPath = FileSystems.getDefault().getPath(testerFolder, questionName, questionName + ".java");
                     
                     try {
                         copyQuestionFile(questionCopyPath, questionName);
                         existingQuestionFiles.add(questionCopyPath.toFile());
-                        ps.println("import TesterFiles." + questionName + ".*;");
+                        ps.println("import " + getTesterFolderShort() + "." + questionName + ".*;");
                         questionTesterFolders.add(testerFiles);
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
@@ -356,7 +364,7 @@ public class TestPaper {
 
         ArrayList<String> commands = new ArrayList<>();
         commands.add("java");
-        commands.add("TesterFiles/QuestionTester.java");
+        commands.add(testerFolder + "/QuestionTester.java");
 
         questionPb.command(commands);
 
