@@ -1,10 +1,9 @@
 /*
- * Name: Fen Lai
- * Email ID: fen.lai.2022
+ * Name:
+ * Email ID:
  */
 
 import java.util.*;
-import java.lang.*;
 
 public class Q1b {
 
@@ -13,15 +12,19 @@ public class Q1b {
      */
     public static int getSumOfEvenIntegers(ArrayList<Object> inputs) {
         // insert your code here.
-        int result = 0;
+        int sum = 0;
 
-        for (Object input: inputs) {
-            
+        for (Object input : inputs) {
+            if (input instanceof Integer) {
+                int inputInt = (int) input;
+
+                if (inputInt % 2 == 0) {
+                    sum += inputInt;
+                }
+            }
         }
 
-
-
-        return -1; // to make this code compile. Please modify accordingly!
+        return sum; // to make this code compile. Please modify accordingly!
     }
 
     // Do not modify the following codes

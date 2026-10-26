@@ -1,6 +1,6 @@
 /*
- * Name: Fen Lai
- * Email ID: fen.lai.2022
+ * Name:
+ * Email ID:
  */
 
 import java.util.*;
@@ -11,51 +11,9 @@ public class Q2b {
      /*
      * Write the method getTopStudent
      */
-    public static String getTopStudent(String filename, String courseName) throws DataException{
+    public static String getTopStudent(String filename, String courseName) {
         // insert your code here    
-        String result = "";
-        double highestGpa = 0.0;
-        String name = "";
-
-        try (Scanner sc = new Scanner(new File(filename));) {
-            while (sc.hasNext()) {
-                String row = sc.nextLine();
-                Scanner lineScanner = new Scanner(row);
-
-                lineScanner.useDelimiter(",");
-                String fullName = lineScanner.next();
-                String courses = lineScanner.next();
-
-                String[] splitCourses = courses.split("-");
-
-                double totalGpa = 0.0;
-
-                for (String course: splitCourses) {
-                    String[] courseGPA = course.split("#");
-                    String courseCode = courseGPA[0];
-                    String gpa = courseGPA[1];
-                    if (courseCode.equals(courseName)) {
-                        System.out.println(gpa + " : " + highestGpa);
-                        if (Double.parseDouble(gpa) > highestGpa) {
-                            highestGpa = Double.parseDouble(gpa);
-                            name = fullName;
-                        }
-                    }
-                }
-
-            }
-            // if (highestGpa==0.0) {
-            //     throw new DataException();
-            // } else {
-                result += name + "-" + highestGpa;
-                return result;
-            // }
-        } catch (FileNotFoundException e) {
-            throw new DataException();
-        } catch (Exception e) {
-            throw new DataException();
-        }
-            // to make this code compile. Please modify accordingly!
+        return ""; // to make this code compile. Please modify accordingly!
     }
 
     //Do not modify the following codes

@@ -1,6 +1,6 @@
 /*
- * Name: Fen Lai
- * Email ID: fen.lai.2022
+ * Name:
+ * Email ID:
  */
 
 import java.util.*;
@@ -11,28 +11,34 @@ public class Q1a {
      * Write the method getIsogramWords
      */
     public static ArrayList<String> getIsogramWords(ArrayList<String> inputs) {
-        ArrayList<String> result = new ArrayList<>();
+        // insert your code here.
+        ArrayList<String> isograms = new ArrayList<String>();
         
-        for (String input: inputs) {
-            ArrayList<Object> appeared = new ArrayList<>();
-            for (int i=0; i<input.length(); i++) {
-                appeared.add(input.charAt(i));
-            }
+        for (String word : inputs) {
+            boolean isIsogram = true;
+            ArrayList<Character> characters = new ArrayList<Character>();
 
-            for (int j=0; j<appeared.size(); j++) {
-                for (int k=j+1; k<appeared.size(); k++) {
-                    if ((appeared.get(j).equals(appeared.get(k)))) {
-                        break;
-                    }
+            for (int index = 0; index < word.length(); index ++) {
+                char character = word.toLowerCase().charAt(index);
+
+                if (characters.contains(character)) {
+                    isIsogram = false;
+                    break;
+                } else {
+                    characters.add(character);
                 }
             }
-            result.add(input);
+
+            // int i = 1;
+            // while (i == 1) {}
+
+            if (isIsogram) {
+                isograms.add(word);
+            }
         }
-
-        return result;
-
-            
-        }// to make this code compile. Please modify accordingly!
+        
+        return isograms; // to make this code compile. Please modify accordingly!
+    }
 
 
     // Do not modify the following codes
