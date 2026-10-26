@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.nio.file.*;
 
 // class RunTesterFile extends Thread {
@@ -222,9 +223,11 @@ public class TestPaper {
                 questionPb.redirectOutput(outputFile);
                 questionPb.redirectError(errorFile);
 
+                boolean success = false;
+
                 try {
                     Process process = questionPb.start();
-                    process.waitFor();
+                    success = process.waitFor(5, TimeUnit.SECONDS);
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (ArrayIndexOutOfBoundsException e) {
@@ -233,13 +236,18 @@ public class TestPaper {
                     e.printStackTrace();
                 }
 
-                try (Scanner sc = new Scanner(errorFile);) {
-                    while (sc.hasNext()) {
-                        System.out.println(sc.nextLine());
-                    }
-
-                    gradingResult.addPartResult(testerName.replaceAll("(?!Q)[A-Z].+Tester.java$", ""), testerName.replaceAll("^Q.+(?=[A-Z].+Tester.java)|Tester.java", ""), "-", "(Compilation Error)", false, 0.0);
+                if (!success) {
+                    gradingResult.addPartResult(testerName.replaceAll("(?!Q)[A-Z].+Tester.java$", ""), testerName.replaceAll("^Q.+(?=[A-Z].+Tester.java)|Tester.java", ""), "-", "(Took too long or infinite loop)", false, 0.0);
                     continue;
+                }
+
+                try (Scanner sc = new Scanner(errorFile);) {
+                    if (sc.hasNext()) {
+                        System.out.println(sc.nextLine());
+                        
+                        gradingResult.addPartResult(testerName.replaceAll("(?!Q)[A-Z].+Tester.java$", ""), testerName.replaceAll("^Q.+(?=[A-Z].+Tester.java)|Tester.java", ""), "-", "(Compilation Error)", false, 0.0);
+                        continue;
+                    }
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
@@ -247,6 +255,7 @@ public class TestPaper {
                 gradingResult.addQuestionResult(readOutputFile(outputFile));
             }
         }
+        System.out.println(gradingResult);
 
         return gradingResult;
     }
@@ -357,9 +366,11 @@ public class TestPaper {
         questionPb.redirectOutput(outputFile);
         questionPb.redirectError(errorFile);
 
+        boolean success = false;
+
         try {
             Process process = questionPb.start();
-            process.waitFor();
+            success = process.waitFor(5, TimeUnit.SECONDS);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -372,7 +383,7 @@ public class TestPaper {
 
         // if compilation error, individually mark each file
         ArrayList<String> errorText = readErrorFile(errorFile);
-        if (errorText.contains("error: compilation failed")) {
+        if (!success || errorText.contains("error: compilation failed")) {
             for (File[] questionTesterFolder : questionTesters) {
                 gradingResult.addQuestionResult(runTesterFiles(questionTesterFolder));
             }
@@ -397,6 +408,6 @@ public class TestPaper {
     }
 
     public static void main(String[] args) {
-        System.out.println(TestPaper.testPaper().getTotalMarks());
+        System.out.println(TestPaper.testPaper());
     }
 }

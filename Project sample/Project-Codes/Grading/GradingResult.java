@@ -29,11 +29,11 @@ class PartResult {
         return actual;
     }
 
-    public void setStatus(boolean passed) {
+    public void setPassed(boolean passed) {
         this.passed = passed;
     }
 
-    public boolean getStatus() {
+    public boolean getPassed() {
         return passed;
     }
 
@@ -43,6 +43,11 @@ class PartResult {
 
     public double getMarks() {
         return marks;
+    }
+
+    @Override
+    public String toString() {
+        return "{expected=" + expected + ",actual=" + actual + ",passed=" + passed + ",marks=" + marks + "}";
     }
 }
 
@@ -83,6 +88,11 @@ class QuestionResult {
         }
 
         return totalMarks;
+    }
+
+    @Override
+    public String toString() {
+        return partResults.toString();
     }
 }
 
@@ -130,5 +140,10 @@ public class GradingResult {
         }
 
         return totalMarks;
+    }
+
+    @Override
+    public String toString() {
+        return questionResults.toString();
     }
 }
