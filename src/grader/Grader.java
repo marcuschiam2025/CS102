@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import model.StudentResult;
@@ -28,15 +29,29 @@ public class Grader {
             System.out.println("Copying " + testerName + " into " + questionFolder);
             try {
                 copyTester(testerFolder, questionFolder, testerName);
-                File outputFile = new File(questionFolder, testerName + "_compile.txt");
-                boolean compiled = compile(questionFolder, testerName, outputFile);
+                File compileFile = new File(questionFolder, testerName + "_compile.txt");
+                File outputFile = new File(questionFolder, testerName + "_output.txt");
+                boolean compiled = compile(questionFolder, testerName, compileFile);
                 System.out.println(testerName + " compiled: " + compiled);
-                boolean finished = runTester(questionFolder, testerName, outputFile, timeLimit);
-                System.out.println(testerName + "Finished in time: " + finished);
+                if (compiled) {
+                    boolean finished = runTester(questionFolder, testerName, outputFile, timeLimit);
+                    System.out.println(testerName + "Finished in time: " + finished);
+                    double score;
+                    if (finished) {
+                        score = readScore(outputFile);
+                        System.out.println(testerName + " score: " + score);
+                    } else {
+                        score = countPassed(outputFile);
+                        System.out.println(testerName + " score: " + score);
+                    }
+
+                }
+
             } catch (IOException | InterruptedException e) {
                 System.out.println("Error: " + e.getMessage());
             }
         }
+
         return null;
     }
 
@@ -59,7 +74,8 @@ public class Grader {
         return exitCode == 0; // if 0 means compiled. else its an error
     }
 
-    private static boolean runTester(File questionFolder, String testerName, File outputFile, int timeLimit)throws IOException, InterruptedException {
+    private static boolean runTester(File questionFolder, String testerName, File outputFile, int timeLimit)
+            throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder("java", testerName);
         pb.directory(questionFolder);
         pb.redirectErrorStream(true); // put error and normal output tgt
@@ -70,5 +86,33 @@ public class Grader {
             process.destroyForcibly(); // still running after the time limit, so stop it
         }
         return finished;
+    }
+
+    private static double readScore(File outputFile) throws IOException {
+        List<String> lines = Files.readAllLines(outputFile.toPath());
+
+        if (lines.isEmpty()) {
+            return 0;
+        }
+        String lastLine = lines.get(lines.size() - 1).trim();
+        try {
+            return Double.parseDouble(lastLine);
+        } catch (NumberFormatException e) {
+            // The last line is not a score, e.g. an error message
+            return 0;
+        }
+    }
+
+    private static double countPassed(File outputFile) throws IOException {
+        List<String> lines = Files.readAllLines(outputFile.toPath());
+        int counter = 0;
+
+        for (String line : lines) {
+            if (line.trim().equals("Passed")) {
+                counter++;
+            }
+        }
+
+        return counter;
     }
 }
