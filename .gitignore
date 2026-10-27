@@ -1,0 +1,15 @@
+# Compiled output (compile.sh puts it in classes/, which must be empty on submission)
+classes/*
+!classes/.gitkeep
+*.class
+
+# Class files that come with the exam resources are needed, so keep them
+!Project sample/**/*.class
+
+# Folders created when the grader unzips submissions
+unzippedFolder/
+*_extracted/
+
+# macOS
+.DS_Store
+__MACOSX/
