@@ -4,8 +4,10 @@ import filehandling.fileHandlings;
 import fixer.SubmissionFixer;
 import java.io.File;
 import java.io.IOException;
+import fixer.UsernameResolver;
 import java.util.ArrayList;
 import java.util.Arrays;
+import grader.Grader;
 
 // Does the work behind the menu and keeps the settings. It never prints
 // anything, it only returns results so the menu can decide how to show them.
@@ -19,7 +21,7 @@ public class GradingCtrl {
     private static final String CSV_EXTENSION = ".csv";
 
     private String submissionsFolder = "Project sample/student-submission";
-    private String testerFolder = "Project sample/Tester-Files";
+    private String testerFolder = "Project sample/TesterFiles";
     private String scoreSheetFile = "Project sample/IS442-ScoreSheet.csv";
     private int timeLimitSeconds = DEFAULT_TIME_LIMIT;
 
@@ -123,14 +125,25 @@ public class GradingCtrl {
         fileHandlings.unzip(zipFile.getPath(), extractFolder.getPath());
 
         // 2. Validate (Shanna, ShiYing): add here once their branch
-        //    is merged
+        // is merged
 
         // 3. Fix
         ArrayList<String> fixes = SubmissionFixer.repairSubmission(
                 zipFile.getPath(), extractFolder.getPath());
 
         // 4. Grade (Shoban, Cedric): add here once grading is merged,
-        //    using testerFolder and timeLimitSeconds
+        // using testerFolder and timeLimitSeconds
+
+        String username = UsernameResolver.getUsername(zipFile.getPath());
+
+        if (username != null && new File(extractFolder, username).isDirectory()) {
+            File usernameFolder = new File(extractFolder, username);
+            // grade checker: grade Q1a, Q1b, Q2a, Q2b, Q3
+            Grader.gradeSubmission(usernameFolder, new File(testerFolder),
+                    timeLimitSeconds);
+        } else {
+            // can't grade: every question gets 0
+        }
 
         return fixes;
     }
