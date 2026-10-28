@@ -74,8 +74,8 @@ import java.nio.file.*;
 // }
 
 public class TestPaper {
-    private static String testerFolder = "Project sample/TesterFiles";
-    private static int timeLimitSeconds = 5;
+    public static String testerFolder = "Project sample/TesterFiles";
+    public static int timeLimitSeconds = 5;
 
     private static String getTesterFolderShort() {
         return testerFolder.replaceAll(".+/", "");
@@ -235,7 +235,8 @@ public class TestPaper {
 
                 try {
                     Process process = questionPb.start();
-                    success = process.waitFor(5, TimeUnit.SECONDS);
+                    // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
+                    success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (ArrayIndexOutOfBoundsException e) {
@@ -378,7 +379,8 @@ public class TestPaper {
 
         try {
             Process process = questionPb.start();
-            success = process.waitFor(5, TimeUnit.SECONDS);
+            // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
+            success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ArrayIndexOutOfBoundsException e) {
