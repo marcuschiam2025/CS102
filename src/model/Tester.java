@@ -16,13 +16,18 @@ public abstract class Tester {
     public double getPoints() {
         return points;
     }
+
+    public void printResultBase() {
+        String testerName = this.getClass().getSimpleName();
+        
+        System.out.print(testerName.replaceAll("(?!Q)[A-Z].+Tester$", "") + ",");
+        System.out.print(testerName.replaceAll("^Q.+(?=[A-Z]Part.+Tester)|Tester", "") + ",");
+    }
     
     public void test(Object expected, Object actual, double points) {
         try {
-            String testerName = this.getClass().getSimpleName();
-            
-            System.out.print(testerName.replaceAll("(?!Q)[A-Z].+Tester$", "") + ",");
-            System.out.print(testerName.replaceAll("^Q.+(?=[A-Z].+Tester)|Tester", "") + ",");
+            printResultBase();
+
             System.out.print(expected + ",");
             System.out.print(actual + ",");
 
@@ -38,7 +43,7 @@ public abstract class Tester {
     }
 
     public void catchException(Exception e) {
-        System.out.println("Exception caught!");
-        e.printStackTrace();
+        printResultBase();
+        System.out.println("-,(Runtime Error),false,0.0");
     }
 }

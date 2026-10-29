@@ -2,6 +2,7 @@ package model;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
 // import java.util.Objects;
 
 class CaseResult {
@@ -35,7 +36,7 @@ class CaseResult {
     }
 
     public CaseResult(double maxScore) {
-        this(0.0, maxScore, CaseResultStatus.TO_BE_TESTED, "");
+        this(0.0, maxScore, CaseResultStatus.MISSING_FILE, "");
     }
 
     // public String getCaseId() {
@@ -134,6 +135,16 @@ public class QuestionResult implements Cloneable {
         }
 
         return maxScore;
+    }
+
+    public ArrayList<String> getCaseIds() {
+        ArrayList<String> caseIds = new ArrayList<String>();
+
+        for (String caseId : cases.keySet()) {
+            caseIds.add(caseId);
+        }
+
+        return caseIds;
     }
 
     public void addCaseResult(String caseId, double maxScore) {

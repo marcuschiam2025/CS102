@@ -2,8 +2,8 @@ package model;
 
 // status is moved to an enum
 public enum CaseResultStatus {
-    TO_BE_TESTED ("To be tested"),
-    COMPLETED ("Completed"),
+    PASSED ("Passed"),
+    FAILED ("Failed"),
     TIMEOUT ("Timeout"),
     COMPILE_ERROR ("Compile error"),
     RUNTIME_ERROR ("Runtime error"),

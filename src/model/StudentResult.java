@@ -3,6 +3,7 @@ package model;
 // import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,6 +47,20 @@ public class StudentResult {
         questionResults.put(questionId, questionResult);
     }
 
+    public void addQuestionResult(StudentResult studentResult) {
+        for (Map.Entry<String, QuestionResult> questionResult : studentResult.getQuestionResults().entrySet()) {
+            for (Map.Entry<String, CaseResult> caseResult : questionResult.getValue().getCases().entrySet()) {
+                CaseResult caseResultOriginal = this.questionResults.get(questionResult.getKey()).getCaseResult(caseResult.getKey());
+                CaseResult caseResultCopy = caseResult.getValue();
+                caseResultOriginal.setCaseResult(caseResultCopy.getScore(), caseResultCopy.getStatus(), caseResultCopy.getDetails());
+            }
+        }
+    }
+
+    public void addCaseResult(String questionId, String caseId, double score, CaseResultStatus status, String details) {
+        this.questionResults.get(questionId).getCaseResult(caseId).setCaseResult(score, status, details);
+    }
+
     // Returns the result for one question, e.g. "Q1a",
     // or null if it has not been graded
     public QuestionResult getQuestionResult(String questionId) {
@@ -66,6 +81,16 @@ public class StudentResult {
             total += result.getMaxScore();
         }
         return total;
+    }
+
+    public HashMap<String, ArrayList<String>> getQuestionAndCaseIds() {
+        HashMap<String, ArrayList<String>> questionIds = new HashMap<String, ArrayList<String>>();
+
+        for (Map.Entry<String, QuestionResult> questionResult : questionResults.entrySet()) {
+            questionIds.put(questionResult.getKey(), questionResult.getValue().getCaseIds());
+        }
+
+        return questionIds;
     }
 
     public static void loadQuestionResultTemplate() {
@@ -102,7 +127,7 @@ public class StudentResult {
         System.out.println(questionResultTemplate);
         Student test = new Student("a", "a", "a", "a", "a");
         StudentResult testResult = new StudentResult(test);
-        testResult.getQuestionResult("3").getCaseResult("4").setCaseResult(1.0, CaseResultStatus.COMPLETED);
+        testResult.getQuestionResult("3").getCaseResult("4").setCaseResult(1.0, CaseResultStatus.PASSED);
         System.out.println(testResult.getTotalScore() == new StudentResult(test).getTotalScore());
     }
 }
