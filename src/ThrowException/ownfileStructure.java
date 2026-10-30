@@ -94,8 +94,6 @@ public class ownfileStructure {
                 Set<String> extra = new HashSet<>(studentStructure);
                 extra.removeAll(expectedStructure);
 
-                System.out.println("Missing: " + missing);
-                System.out.println("Extra: " + extra);
                 if (!missing.isEmpty()) {
                     exceptions.add(new Exception("Missing: " + missing));
                 }
