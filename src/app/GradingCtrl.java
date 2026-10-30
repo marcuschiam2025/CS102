@@ -6,6 +6,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import model.StudentResult;
+import model.Student;
+import grading.Grading;
 
 // Does the work behind the menu and keeps the settings. It never prints
 // anything, it only returns results so the menu can decide how to show them.
@@ -19,7 +22,7 @@ public class GradingCtrl {
     private static final String CSV_EXTENSION = ".csv";
 
     private String submissionsFolder = "Project sample/student-submission";
-    private String testerFolder = "Project sample/Tester-Files";
+    private String testerFolder = "Project sample/TesterFiles";
     private String scoreSheetFile = "Project sample/IS442-ScoreSheet.csv";
     private int timeLimitSeconds = DEFAULT_TIME_LIMIT;
 
@@ -111,7 +114,7 @@ public class GradingCtrl {
     }
 
     // Unzips and fixes one submission. Returns the list of fixes made.
-    public ArrayList<String> processSubmission(File zipFile)
+    public ArrayList<String> processSubmission(File zipFile, ArrayList<StudentResult> studentResults)
             throws IOException {
         String zipName = zipFile.getName();
         int nameLength = zipName.length() - ZIP_EXTENSION.length();
@@ -131,6 +134,10 @@ public class GradingCtrl {
 
         // 4. Grade (Shoban, Cedric): add here once grading is merged,
         //    using testerFolder and timeLimitSeconds
+        // temporary student for debug
+        Student testStudent = new Student("a", "a", "a", "a", "a");
+        File[] extractFolderFiles = extractFolder.listFiles();
+        studentResults.add(Grading.gradePaper(testStudent, extractFolderFiles, testerFolder, timeLimitSeconds));
 
         return fixes;
     }
