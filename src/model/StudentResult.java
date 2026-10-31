@@ -11,7 +11,7 @@ import java.io.FileNotFoundException;
 // All question scores for one student, plus the total
 public class StudentResult {
     private Student student;
-    private Map<String, QuestionResult> questionResults = new HashMap<String, QuestionResult>();
+    private HashMap<String, QuestionResult> questionResults = new HashMap<String, QuestionResult>();
     // suggestion:
     // GradingResults for StudentResult
     // question data (max score) can be put into another java class
@@ -24,7 +24,7 @@ public class StudentResult {
 
     // template map for question results
     public static String questionResultTemplateFilePath = "src/model/QuestionResultTemplate.csv";
-    public static Map<String, QuestionResult> questionResultTemplate = new HashMap<String, QuestionResult>();
+    public static HashMap<String, QuestionResult> questionResultTemplate = new HashMap<String, QuestionResult>();
 
     public StudentResult(Student student) {
         this.student = student;
@@ -39,7 +39,7 @@ public class StudentResult {
         return student;
     }
 
-    public Map<String, QuestionResult> getQuestionResults() {
+    public HashMap<String, QuestionResult> getQuestionResults() {
         return questionResults;
     }
 

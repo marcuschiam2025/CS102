@@ -9,6 +9,7 @@ import java.util.Arrays;
 import model.StudentResult;
 import model.Student;
 import grading.Grading;
+import grading.GradingResultsViewer;
 
 // Does the work behind the menu and keeps the settings. It never prints
 // anything, it only returns results so the menu can decide how to show them.
@@ -25,6 +26,8 @@ public class GradingCtrl {
     private String testerFolder = "Project sample/TesterFiles";
     private String scoreSheetFile = "Project sample/IS442-ScoreSheet.csv";
     private int timeLimitSeconds = DEFAULT_TIME_LIMIT;
+
+    private ArrayList<StudentResult> studentResults = new ArrayList<>();
 
     public String getSubmissionsFolder() {
         return submissionsFolder;
@@ -114,7 +117,7 @@ public class GradingCtrl {
     }
 
     // Unzips and fixes one submission. Returns the list of fixes made.
-    public ArrayList<String> processSubmission(File zipFile, ArrayList<StudentResult> studentResults)
+    public ArrayList<String> processSubmission(File zipFile)
             throws IOException {
         String zipName = zipFile.getName();
         int nameLength = zipName.length() - ZIP_EXTENSION.length();
@@ -140,5 +143,13 @@ public class GradingCtrl {
         studentResults.add(Grading.gradePaper(testStudent, extractFolderFiles, testerFolder, timeLimitSeconds));
 
         return fixes;
+    }
+
+    public void viewResults() {
+        GradingResultsViewer.viewResults(studentResults);
+    }
+
+    public void exportCSV() {
+        GradingResultsViewer.exportCSV(studentResults, this.scoreSheetFile);
     }
 }
