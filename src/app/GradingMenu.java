@@ -3,7 +3,6 @@ package app;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
-import model.StudentResult;
 
 // Shows the menus and reads what the user types.
 // The actual work is done by GradingCtrl.
@@ -31,7 +30,6 @@ public class GradingMenu {
             + "grading are not added yet, so only unzip and fix will run.";
 
     private Scanner sc;
-    private ArrayList<StudentResult> studentResults = new ArrayList<>();
     private GradingCtrl ctrl;
 
     public GradingMenu() {
@@ -145,15 +143,18 @@ public class GradingMenu {
     private void viewResults() {
         // Shoban, Cedric: show each student's scores here once grading
         // is merged
-        System.out.println("\nNot available yet: results will be shown "
-                + "here once grading is added.");
+        ctrl.viewResults();
+        // System.out.println("\nNot available yet: results will be shown "
+        //         + "here once grading is added.");
     }
 
     private void exportResults() {
         // Shoban, Cedric: export to ctrl.getScoreSheetFile() here once
         // grading is merged
-        System.out.println("\nNot available yet: CSV export will be "
-                + "added together with grading.");
+        ctrl.exportCSV();
+        System.out.println("Successfully exported to " + ctrl.getScoreSheetFile());
+        // System.out.println("\nNot available yet: CSV export will be "
+        //         + "added together with grading.");
     }
 
     private void processAllSubmissions() {
@@ -183,7 +184,7 @@ public class GradingMenu {
     // One submission failing must not stop the others.
     private boolean processSubmission(File zipFile) {
         try {
-            ArrayList<String> fixes = ctrl.processSubmission(zipFile, studentResults);
+            ArrayList<String> fixes = ctrl.processSubmission(zipFile);
 
             for (String fix : fixes) {
                 System.out.println("  - " + fix);
