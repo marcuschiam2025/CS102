@@ -143,15 +143,18 @@ public class GradingMenu {
     private void viewResults() {
         // Shoban, Cedric: show each student's scores here once grading
         // is merged
-        System.out.println("\nNot available yet: results will be shown "
-                + "here once grading is added.");
+        ctrl.viewResults();
+        // System.out.println("\nNot available yet: results will be shown "
+        //         + "here once grading is added.");
     }
 
     private void exportResults() {
         // Shoban, Cedric: export to ctrl.getScoreSheetFile() here once
         // grading is merged
-        System.out.println("\nNot available yet: CSV export will be "
-                + "added together with grading.");
+        ctrl.exportCSV();
+        System.out.println("Successfully exported to " + ctrl.getScoreSheetFile());
+        // System.out.println("\nNot available yet: CSV export will be "
+        //         + "added together with grading.");
     }
 
     private void processAllSubmissions() {

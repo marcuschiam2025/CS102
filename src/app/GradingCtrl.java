@@ -8,6 +8,10 @@ import fixer.UsernameResolver;
 import java.util.ArrayList;
 import java.util.Arrays;
 import grader.Grader;
+import model.StudentResult;
+import model.Student;
+import grading.Grading;
+import grading.GradingResultsViewer;
 
 // Does the work behind the menu and keeps the settings. It never prints
 // anything, it only returns results so the menu can decide how to show them.
@@ -24,6 +28,8 @@ public class GradingCtrl {
     private String testerFolder = "Project sample/TesterFiles";
     private String scoreSheetFile = "Project sample/IS442-ScoreSheet.csv";
     private int timeLimitSeconds = DEFAULT_TIME_LIMIT;
+
+    private ArrayList<StudentResult> studentResults = new ArrayList<>();
 
     public String getSubmissionsFolder() {
         return submissionsFolder;
@@ -144,7 +150,20 @@ public class GradingCtrl {
         } else {
             // can't grade: every question gets 0
         }
+        //    using testerFolder and timeLimitSeconds
+        // temporary student for debug
+        Student testStudent = new Student("a", "a", "a", "a", "a");
+        File[] extractFolderFiles = extractFolder.listFiles();
+        studentResults.add(Grading.gradePaper(testStudent, extractFolderFiles, testerFolder, timeLimitSeconds));
 
         return fixes;
+    }
+
+    public void viewResults() {
+        GradingResultsViewer.viewResults(studentResults);
+    }
+
+    public void exportCSV() {
+        GradingResultsViewer.exportCSV(studentResults, this.scoreSheetFile);
     }
 }
