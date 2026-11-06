@@ -4,10 +4,16 @@ import filehandling.fileHandlings;
 import fixer.SubmissionFixer;
 import java.io.File;
 import java.io.IOException;
+import fixer.UsernameResolver;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import ThrowException.MissingNameOrEmail;
+import grader.Grader;
+import model.StudentResult;
+import model.Student;
+import grading.Grading;
+import grading.GradingResultsViewer;
 
 // Does the work behind the menu and keeps the settings. It never prints
 // anything, it only returns results so the menu can decide how to show them.
@@ -21,9 +27,11 @@ public class GradingCtrl {
     private static final String CSV_EXTENSION = ".csv";
 
     private String submissionsFolder = "Project sample/student-submission";
-    private String testerFolder = "Project sample/Tester-Files";
+    private String testerFolder = "Project sample/TesterFiles";
     private String scoreSheetFile = "Project sample/IS442-ScoreSheet.csv";
     private int timeLimitSeconds = DEFAULT_TIME_LIMIT;
+
+    private ArrayList<StudentResult> studentResults = new ArrayList<>();
 
     public String getSubmissionsFolder() {
         return submissionsFolder;
@@ -132,8 +140,32 @@ public class GradingCtrl {
                 zipFile.getPath(), extractFolder.getPath());
 
         // 4. Grade (Shoban, Cedric): add here once grading is merged,
+        // using testerFolder and timeLimitSeconds
+
+        String username = UsernameResolver.getUsername(zipFile.getPath());
+
+        if (username != null && new File(extractFolder, username).isDirectory()) {
+            File usernameFolder = new File(extractFolder, username);
+            // grade checker: grade Q1a, Q1b, Q2a, Q2b, Q3
+            Grader.gradeSubmission(usernameFolder, new File(testerFolder),
+                    timeLimitSeconds);
+        } else {
+            // can't grade: every question gets 0
+        }
         //    using testerFolder and timeLimitSeconds
+        // temporary student for debug
+        Student testStudent = new Student("a", "a", "a", "a", "a");
+        File[] extractFolderFiles = extractFolder.listFiles();
+        studentResults.add(Grading.gradePaper(testStudent, extractFolderFiles, testerFolder, timeLimitSeconds));
 
         return fixes;
+    }
+
+    public void viewResults() {
+        GradingResultsViewer.viewResults(studentResults);
+    }
+
+    public void exportCSV() {
+        GradingResultsViewer.exportCSV(studentResults, this.scoreSheetFile);
     }
 }

@@ -1,0 +1,6 @@
+Q1a,Part1,[alice, ben, cathy],[alice, ben, cathy],true,1.0
+Q1a,Part2,[zoe],[zoe],true,1.0
+Q1a,Part3,[Daniel],[Daniel],true,1.0
+Q1b,Part1,6,6,true,1.0
+Q1b,Part2,2,2,true,1.0
+Q1b,Part3,20,20,true,1.0
