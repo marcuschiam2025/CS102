@@ -7,6 +7,8 @@ import java.io.IOException;
 import fixer.UsernameResolver;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import ThrowException.MissingNameOrEmail;
 import grader.Grader;
 import model.StudentResult;
 import model.Student;
@@ -131,8 +133,8 @@ public class GradingCtrl {
         fileHandlings.unzip(zipFile.getPath(), extractFolder.getPath());
 
         // 2. Validate (Shanna, ShiYing): add here once their branch
-        // is merged
-
+        //    is merged
+        ArrayList<Exception> exceptions = MissingNameOrEmail.catchMissingNames(extractFolder.getPath());
         // 3. Fix
         ArrayList<String> fixes = SubmissionFixer.repairSubmission(
                 zipFile.getPath(), extractFolder.getPath());
