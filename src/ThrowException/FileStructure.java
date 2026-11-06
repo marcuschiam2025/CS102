@@ -9,8 +9,7 @@ import OwnExceptions.AdditionalFileException;
 import OwnExceptions.FolderNameException;
 import OwnExceptions.MissingFileException;
 import Validations.FolderNameChecker;
-import fileHandling.fileHandlings;
-
+import filehandling.fileHandlings;
 public class FileStructure {
 
     public static ArrayList<Exception> wrongFileStructure(String filePath) {

@@ -9,8 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import fileHandling.fileHandlings;
-
+import filehandling.fileHandlings;
 public class idk {
     public static ArrayList<Exception> Structurecheck(String FilePath){
         ArrayList<Exception> exceptions = new ArrayList<>();

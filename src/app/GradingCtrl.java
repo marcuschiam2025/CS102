@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import ThrowException.MissingNameOrEmail;
+
 // Does the work behind the menu and keeps the settings. It never prints
 // anything, it only returns results so the menu can decide how to show them.
 public class GradingCtrl {
@@ -124,7 +126,7 @@ public class GradingCtrl {
 
         // 2. Validate (Shanna, ShiYing): add here once their branch
         //    is merged
-
+        ArrayList<Exception> exceptions = MissingNameOrEmail.catchMissingNames(extractFolder.getPath());
         // 3. Fix
         ArrayList<String> fixes = SubmissionFixer.repairSubmission(
                 zipFile.getPath(), extractFolder.getPath());

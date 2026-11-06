@@ -480,8 +480,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.*;
 
-import fileHandling.fileHandlings;
-
+import filehandling.fileHandlings;
 public class StructureChecker {
 
     public static ArrayList<Exception> Structurecheck(String FilePath) {
