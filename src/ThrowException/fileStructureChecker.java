@@ -210,28 +210,8 @@ public class fileStructureChecker {
         } catch (Exception e) {
             exceptions.add(new FileStructureException(
                     "Structure checking error: " + e.getMessage()));
-        } finally {
-            deleteFolder(Paths.get("correctStructure"));
-            deleteFolder(Paths.get("studentStructure"));
         }
         return exceptions;
-    }
-
-    public static void deleteFolder(Path folder) throws IOException {
-        if (!Files.exists(folder)) {
-            return;
-        }
-
-        try (Stream<Path> paths = Files.walk(folder)) {
-            paths.sorted(Comparator.reverseOrder())
-                    .forEach(path -> {
-                        try {
-                            Files.delete(path);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-        }
     }
 
     public static void main(String[] args) {
