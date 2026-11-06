@@ -39,8 +39,7 @@ public class fileStructureChecker {
     }
 
     public static ArrayList<Exception> Structurecheck(String rightStructure, String checkStructure) throws IOException {
-        ArrayList<Exception> exceptions = new ArrayList<>();
-
+        ArrayList<Exception> exceptions = MissingNameOrEmail.catchMissingNames(extractFolder.getPath());
         try {
 
             // Step 1: Unzip the correct structure
