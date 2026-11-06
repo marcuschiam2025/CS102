@@ -14,6 +14,7 @@ import model.StudentResult;
 import model.Student;
 import grading.Grading;
 import grading.GradingResultsViewer;
+import ThrowException.fileStructureChecker;
 
 // Does the work behind the menu and keeps the settings. It never prints
 // anything, it only returns results so the menu can decide how to show them.
@@ -134,7 +135,7 @@ public class GradingCtrl {
 
         // 2. Validate (Shanna, ShiYing): add here once their branch
         // is merged
-        ArrayList<Exception> exceptions =  fileStructureChecker.Structurecheck();
+        ArrayList<Exception> exceptions = fileStructureChecker.Structurecheck("../RenameToYourUsername.zip",extractFolder.getPath());
         // 3. Fix
         ArrayList<String> fixes = SubmissionFixer.repairSubmission(
                 zipFile.getPath(), extractFolder.getPath());
@@ -152,7 +153,7 @@ public class GradingCtrl {
         } else {
             // can't grade: every question gets 0
         }
-        //    using testerFolder and timeLimitSeconds
+        // using testerFolder and timeLimitSeconds
         // temporary student for debug
         Student testStudent = new Student("a", "a", "a", "a", "a");
         File[] extractFolderFiles = extractFolder.listFiles();
