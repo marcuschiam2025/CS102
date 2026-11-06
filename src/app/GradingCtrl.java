@@ -134,7 +134,7 @@ public class GradingCtrl {
 
         // 2. Validate (Shanna, ShiYing): add here once their branch
         // is merged
-        
+        ArrayList<Exception> exceptions =  fileStructureChecker.Structurecheck();
         // 3. Fix
         ArrayList<String> fixes = SubmissionFixer.repairSubmission(
                 zipFile.getPath(), extractFolder.getPath());
