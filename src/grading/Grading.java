@@ -5,35 +5,12 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.nio.file.*;
 import model.StudentResult;
-import model.QuestionResult;
 import model.Student;
 import model.CaseResultStatus;
-
-// conflicts!
-// must merge with grader
-// copy tester files to student submission folder (grader)
-// keep the marking method here (grading)
-// FINISH THIS BY SUNDAY NIGHT!!!!!!
 
 public class Grading {
     public static File errorFile = new File("error.txt");
     public static File outputFile = new File("output.txt");
-
-    // private static void copyQuestionFile(Path questionCopyPath, String questionName) throws IOException {
-    //     File questionCopyFile = Files.createFile(questionCopyPath).toFile();
-
-    //     PrintStream ps = new PrintStream(questionCopyFile);
-    //     ps.println("package " + questionName + ";");
-
-    //     File questionFile = new File("Submissions/" + questionName.replaceAll("(?<=Q\\d+).+", "") + "/" + questionName + ".java");
-    //     Scanner sc = new Scanner(questionFile);
-    //     while (sc.hasNext()) {
-    //         ps.println(sc.nextLine());
-    //     }
-        
-    //     sc.close();
-    //     ps.close();
-    // }
 
     private static void copyTesterFiles(File testerFolder, File questionFolder) throws IOException {
         for (File testerFile : testerFolder.listFiles()) {
@@ -138,22 +115,16 @@ public class Grading {
             e.printStackTrace();
         }
 
-        // ps.println("package " + testerFolder.replaceAll(".+/", "") + ";");
-
         for (File questionTesterFolder : questionTesterFolders) {
             String questionId = questionTesterFolder.getName();
 
             if (questionAndCaseIds.containsKey(questionId)) {
-                // Path questionCopyPath = FileSystems.getDefault().getPath(testerFolder, questionId, questionId + ".java");
-                
                 try {
                     copyTesterFiles(questionTesterFolder, questionFolders);
-                    // ps.println("import " + questionId + ".*;");
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
-                    // System.out.println("No submission question file exists, skipping");
                     continue;
                 }
             }
@@ -168,7 +139,6 @@ public class Grading {
                 }
             }
 
-            // ps.println("System.out.print(score); } }");
             ps.println("} }");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -239,9 +209,6 @@ public class Grading {
     public static StudentResult gradePaper(Student student, File questionFolder, String testerFolder, int timeLimitSeconds) {
         StudentResult studentResult = new StudentResult(student);
         HashMap<String, ArrayList<String>> questionAndCaseIds = studentResult.getQuestionAndCaseIds();
-
-        // File testerFolderFile = new File(testerFolder);
-        // File[] questionTesterFolders = testerFolderFile.listFiles();
         
         boolean success = runAllTesterFiles(questionAndCaseIds, questionFolder, testerFolder, timeLimitSeconds);
 
@@ -275,29 +242,7 @@ public class Grading {
         return studentResult;
     }
 
-    // public static void compileTester() {
-    //     ProcessBuilder questionPb = new ProcessBuilder();
-
-    //     ArrayList<String> commands = new ArrayList<>();
-    //     commands.add("javac");
-    //     commands.add("src/model/QuestionResult.java");
-
-    //     questionPb.command(commands);
-
-    //     try {
-    //         Process process = questionPb.start();
-    //         // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
-    //         process.waitFor();
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //     } catch (InterruptedException e) {
-    //         e.printStackTrace();
-    //     }
-    // }
-
     public static void main(String[] args) {
-        // Grading.compileTester();
-
         StudentResult.loadQuestionResultTemplate();
         Student student = new Student("a", "a", "a", "a", "a");
         File questionFolder = new File("src/unzippedFolder/2023-2024-chee.teo.2022.zip");
