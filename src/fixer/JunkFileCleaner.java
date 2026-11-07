@@ -2,6 +2,7 @@ package fixer;
 
 import filehandling.fileHandlings;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class JunkFileCleaner {
@@ -19,9 +20,20 @@ public class JunkFileCleaner {
     //   Class files given with the exam (e.g. Circle.class, which has
     //   no Circle.java) are kept.
     public static void clean(File folder, ArrayList<String> messages) {
+        ArrayList<Exception> problems = new ArrayList<>();
+        clean(folder, messages, problems);
+        addProblemMessages(messages, problems);
+    }
+
+    public static void clean(File folder, ArrayList<String> messages,
+            ArrayList<Exception> problems) {
         File[] items = folder.listFiles();
 
         if (items == null) {
+            if (folder.isDirectory()) {
+                problems.add(new IOException("Cannot inspect folder "
+                        + folder + "."));
+            }
             return;
         }
 
@@ -31,22 +43,40 @@ public class JunkFileCleaner {
             if (item.isDirectory()) {
                 if (name.equals(MAC_FOLDER)) {
                     fileHandlings.deleteFolder(item);
-                    messages.add("Removed " + MAC_FOLDER + " folder.");
+                    if (item.exists()) {
+                        problems.add(new IOException("Cannot remove "
+                                + MAC_FOLDER + " folder."));
+                    } else {
+                        messages.add("Removed " + MAC_FOLDER + " folder.");
+                    }
                 } else {
-                    clean(item, messages);
+                    clean(item, messages, problems);
                 }
             } else if (name.equals(MAC_FILE)) {
                 if (item.delete()) {
                     messages.add("Removed " + MAC_FILE + " from "
                             + folder.getName() + ".");
+                } else {
+                    problems.add(new IOException("Cannot remove " + item
+                            + "."));
                 }
             } else if (name.endsWith(CLASS_EXTENSION)
                     && hasJavaFile(folder, name)) {
                 if (item.delete()) {
                     messages.add("Removed old compiled file " + name
                             + " from " + folder.getName() + ".");
+                } else {
+                    problems.add(new IOException("Cannot remove " + item
+                            + "."));
                 }
             }
+        }
+    }
+
+    private static void addProblemMessages(ArrayList<String> messages,
+            ArrayList<Exception> problems) {
+        for (Exception problem : problems) {
+            messages.add(problem.getMessage());
         }
     }
 

@@ -1,14 +1,24 @@
 package fixer;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class MisplacedFileFixer {
     private static final int FOLDER_INDEX = 0; // see expectedFiles below
 
     public static void fix(File usernameFolder, ArrayList<String> messages) {
+        ArrayList<Exception> problems = new ArrayList<>();
+        fix(usernameFolder, messages, problems);
+        for (Exception problem : problems) {
+            messages.add(problem.getMessage());
+        }
+    }
+
+    public static void fix(File usernameFolder, ArrayList<String> messages,
+            ArrayList<Exception> problems) {
         File q1Folder = new File(usernameFolder, "Q1");
-        q1Folder.mkdirs();
+        createFolder(q1Folder, problems);
 
         String[] q1Items = { "Q1a", "Q1b", "Q1a.java", "Q1b.java" };
 
@@ -21,12 +31,13 @@ public class MisplacedFileFixer {
             }
 
             if (destination.exists()) {
-                messages.add("Cannot move " + itemName
-                        + ": it already exists in Q1.");
+                problems.add(new IOException("Cannot move " + itemName
+                        + ": it already exists in Q1."));
             } else if (source.renameTo(destination)) {
                 messages.add("Moved " + itemName + " into Q1.");
             } else {
-                messages.add("Cannot move " + itemName + ".");
+                problems.add(new IOException("Cannot move " + itemName
+                        + "."));
             }
         }
 
@@ -47,7 +58,7 @@ public class MisplacedFileFixer {
                 File destination = new File(correctFolder, fileName);
 
                 // Create the expected question folder if necessary.
-                correctFolder.mkdirs();
+                createFolder(correctFolder, problems);
 
                 // Search within the username folder for this exact filename.
                 File source = findFile(usernameFolder, fileName, destination);
@@ -57,15 +68,25 @@ public class MisplacedFileFixer {
                 }
 
                 if (destination.exists()) {
-                    messages.add("Cannot move " + fileName
-                            + ": destination already exists.");
+                    problems.add(new IOException("Cannot move " + fileName
+                            + ": destination already exists."));
                 } else if (source.renameTo(destination)) {
                     messages.add("Moved " + fileName + " to " + folderName
                             + ".");
                 } else {
-                    messages.add("Cannot move " + fileName + ".");
+                    problems.add(new IOException("Cannot move " + fileName
+                            + "."));
                 }
             }
+        }
+    }
+
+    private static void createFolder(File folder,
+            ArrayList<Exception> problems) {
+        if (!folder.isDirectory() && !folder.mkdirs()
+                && !folder.isDirectory()) {
+            problems.add(new IOException("Cannot create folder " + folder
+                    + "."));
         }
     }
 

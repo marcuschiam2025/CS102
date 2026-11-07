@@ -1,6 +1,7 @@
 package fixer;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class HierarchyFixer {
@@ -9,6 +10,16 @@ public class HierarchyFixer {
     // Returns false if the username folder cannot be created.
     public static boolean fix(File root, File usernameFolder,
             String[] questions, ArrayList<String> messages) {
+        ArrayList<Exception> problems = new ArrayList<>();
+        boolean fixed = fix(root, usernameFolder, questions, messages,
+                problems);
+        addProblemMessages(messages, problems);
+        return fixed;
+    }
+
+    public static boolean fix(File root, File usernameFolder,
+            String[] questions, ArrayList<String> messages,
+            ArrayList<Exception> problems) {
         boolean questionsAtRoot = false;
 
         for (String question : questions) {
@@ -23,12 +34,16 @@ public class HierarchyFixer {
         }
 
         if (usernameFolder.exists() && !usernameFolder.isDirectory()) {
-            messages.add("Cannot create username folder: "
-                    + "a file has that name.");
+            problems.add(new IOException("Cannot create username folder: "
+                    + "a file has that name."));
             return false;
         }
 
-        usernameFolder.mkdirs();
+        if (!usernameFolder.exists() && !usernameFolder.mkdirs()) {
+            problems.add(new IOException("Cannot create username folder "
+                    + usernameFolder + "."));
+            return false;
+        }
 
         for (String question : questions) {
             File source = new File(root, question);
@@ -39,16 +54,24 @@ public class HierarchyFixer {
             }
 
             if (destination.exists()) {
-                messages.add("Cannot move " + question
-                        + ": destination already exists.");
+                problems.add(new IOException("Cannot move " + question
+                        + ": destination already exists."));
             } else if (source.renameTo(destination)) {
                 messages.add("Moved " + question
                         + " into the username folder.");
             } else {
-                messages.add("Cannot move " + question + ".");
+                problems.add(new IOException("Cannot move " + question
+                        + "."));
             }
         }
 
         return true;
+    }
+
+    private static void addProblemMessages(ArrayList<String> messages,
+            ArrayList<Exception> problems) {
+        for (Exception problem : problems) {
+            messages.add(problem.getMessage());
+        }
     }
 }

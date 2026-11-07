@@ -1,8 +1,11 @@
 package fixer;
 
+import OwnExceptions.MissingEmailException;
+import OwnExceptions.MissingNameException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -26,8 +29,18 @@ public class HeaderFixer {
 
     public static void fix(File submissionFolder, String username,
             String studentName, ArrayList<String> messages) {
+        ArrayList<Exception> problems = new ArrayList<>();
+        fix(submissionFolder, username, studentName, messages, problems);
+        for (Exception problem : problems) {
+            messages.add(problem.getMessage());
+        }
+    }
+
+    public static void fix(File submissionFolder, String username,
+            String studentName, ArrayList<String> messages,
+            ArrayList<Exception> problems) {
         ArrayList<File> javaFiles = new ArrayList<>();
-        findJavaFiles(submissionFolder, javaFiles);
+        findJavaFiles(submissionFolder, javaFiles, problems);
 
         for (File javaFile : javaFiles) {
             try {
@@ -38,18 +51,47 @@ public class HeaderFixer {
                     messages.add(javaFile.getName() + ": " + result);
                 }
             } catch (FileNotFoundException exception) {
-                messages.add("Failed to repair " + javaFile + ": "
-                        + exception.getMessage());
+                problems.add(exception);
+                continue;
             }
+
+            try {
+                validateHeader(javaFile, username, studentName, problems);
+            } catch (FileNotFoundException exception) {
+                problems.add(exception);
+            }
+        }
+    }
+
+    private static void validateHeader(File javaFile, String username,
+            String studentName, ArrayList<Exception> problems)
+            throws FileNotFoundException {
+        String content = readWholeFile(javaFile);
+        String nameLine = "(?im)^\\s*\\*?\\s*Name\\s*:\\s*"
+                + Pattern.quote(studentName) + "\\s*$";
+        String emailLine = "(?im)^\\s*\\*?\\s*Email\\s+ID\\s*:\\s*"
+                + Pattern.quote(username) + "\\s*$";
+
+        if (!Pattern.compile(nameLine).matcher(content).find()) {
+            problems.add(new MissingNameException(javaFile.getPath()
+                    + " is still missing the expected student name."));
+        }
+        if (!Pattern.compile(emailLine).matcher(content).find()) {
+            problems.add(new MissingEmailException(javaFile.getPath()
+                    + " is still missing the expected student email."));
         }
     }
 
     // Adds every .java file in the folder and its subfolders to the list
     private static void findJavaFiles(File folder,
-            ArrayList<File> javaFiles) {
+            ArrayList<File> javaFiles, ArrayList<Exception> problems) {
         File[] items = folder.listFiles();
 
         if (items == null) {
+            if (folder.isDirectory()) {
+                problems.add(new IOException("Cannot inspect folder "
+                        + folder + "."));
+            }
             return;
         }
 
@@ -59,7 +101,7 @@ public class HeaderFixer {
             if (item.isFile() && name.endsWith(".java")) {
                 javaFiles.add(item);
             } else if (item.isDirectory()) {
-                findJavaFiles(item, javaFiles);
+                findJavaFiles(item, javaFiles, problems);
             }
         }
     }

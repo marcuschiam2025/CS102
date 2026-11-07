@@ -137,8 +137,13 @@ public class GradingCtrl {
         // is merged
         ArrayList<Exception> exceptions = fileStructureChecker.Structurecheck("../RenameToYourUsername.zip",extractFolder.getPath());
         // 3. Fix
+        ArrayList<Exception> repairProblems = new ArrayList<>();
         ArrayList<String> fixes = SubmissionFixer.repairSubmission(
-                zipFile.getPath(), extractFolder.getPath());
+                zipFile.getPath(), extractFolder.getPath(), repairProblems);
+        for (Exception problem : repairProblems) {
+            fixes.add("Problem [" + problem.getClass().getSimpleName()
+                    + "]: " + problem.getMessage());
+        }
 
         // 4. Grade (Shoban, Cedric): add here once grading is merged,
         // using testerFolder and timeLimitSeconds
