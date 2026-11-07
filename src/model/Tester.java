@@ -21,7 +21,7 @@ public abstract class Tester {
         String testerName = this.getClass().getSimpleName();
         
         System.out.print(testerName.replaceAll("(?!Q)[A-Z].+Tester$", "") + ",");
-        System.out.print(testerName.replaceAll("^Q.+(?=[A-Z]Part.+Tester)|Tester", "") + ",");
+        System.out.print(testerName.replaceAll("^Q.+Part(?=.+Tester)|Tester", "") + ",");
     }
     
     public void test(Object expected, Object actual, double points) {
@@ -37,6 +37,20 @@ public abstract class Tester {
             } else {
                 System.out.println("false,0.0");
             }
+        } catch (Exception e) {
+            catchException(e);
+        }
+    }
+
+    public void printResult(Object expected, Object actual, boolean passed, double points) {
+        try {
+            printResultBase();
+
+            System.out.print(expected + ",");
+            System.out.print(actual + ",");
+            addPoints(points);
+            System.out.print(passed + ",");
+            System.out.println(points);
         } catch (Exception e) {
             catchException(e);
         }

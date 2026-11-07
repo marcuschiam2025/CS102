@@ -3,6 +3,7 @@ package app;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
+import model.StudentResult;
 
 // Shows the menus and reads what the user types.
 // The actual work is done by GradingCtrl.
@@ -121,6 +122,7 @@ public class GradingMenu {
     // ---------- Main menu actions ----------
 
     private void gradeAllSubmissions() {
+        StudentResult.loadQuestionResultTemplate();
         System.out.println("\n" + NOT_GRADING_YET);
         processAllSubmissions();
     }
@@ -132,6 +134,7 @@ public class GradingMenu {
             return;
         }
 
+        StudentResult.loadQuestionResultTemplate();
         System.out.println("\n" + NOT_GRADING_YET);
         System.out.println("\n" + zipFile.getName());
 

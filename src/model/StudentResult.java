@@ -127,7 +127,7 @@ public class StudentResult {
         System.out.println(questionResultTemplate);
         Student test = new Student("a", "a", "a", "a", "a");
         StudentResult testResult = new StudentResult(test);
-        testResult.getQuestionResult("3").getCaseResult("4").setCaseResult(1.0, CaseResultStatus.PASSED);
+        testResult.getQuestionResult("Q3").getCaseResult("4").setCaseResult(1.0, CaseResultStatus.PASSED);
         System.out.println(testResult.getTotalScore() == new StudentResult(test).getTotalScore());
     }
 }

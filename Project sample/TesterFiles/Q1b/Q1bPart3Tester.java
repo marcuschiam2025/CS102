@@ -1,23 +1,21 @@
-package Q1b;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import model.Tester;
 
-public class Q1bCase3Tester extends Tester {
+public class Q1bPart3Tester extends Tester {
     public double grade() {
-        Q1bCase3Tester q1bCase3Tester = new Q1bCase3Tester();
+        Q1bPart3Tester q1bPart3Tester = new Q1bPart3Tester();
 
         ArrayList<Object> original = new ArrayList<Object>(Arrays.asList(9, 2, 10, 3, 5, 8));
         int expected = 20;
-        q1bCase3Tester.test(expected, Q1b.getSumOfEvenIntegers(original), 1);
+        q1bPart3Tester.test(expected, Q1b.getSumOfEvenIntegers(original), 1);
 
-        return q1bCase3Tester.getPoints();
+        return q1bPart3Tester.getPoints();
     }
     
     public static void main(String[] args) {
-        Q1bCase3Tester q1bCase3Tester = new Q1bCase3Tester();
-        q1bCase3Tester.grade();
+        Q1bPart3Tester q1bPart3Tester = new Q1bPart3Tester();
+        q1bPart3Tester.grade();
         // System.out.println(q1bPart3Tester.grade());
     }
 }

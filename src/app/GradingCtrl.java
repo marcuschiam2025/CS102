@@ -147,16 +147,15 @@ public class GradingCtrl {
         if (username != null && new File(extractFolder, username).isDirectory()) {
             File usernameFolder = new File(extractFolder, username);
             // grade checker: grade Q1a, Q1b, Q2a, Q2b, Q3
-            Grader.gradeSubmission(usernameFolder, new File(testerFolder),
+            Grader.gradeSubmission(new File(testerFolder), usernameFolder, 
                     timeLimitSeconds);
         } else {
             // can't grade: every question gets 0
         }
         //    using testerFolder and timeLimitSeconds
         // temporary student for debug
-        Student testStudent = new Student("a", "a", "a", "a", "a");
-        File[] extractFolderFiles = extractFolder.listFiles();
-        studentResults.add(Grading.gradePaper(testStudent, extractFolderFiles, testerFolder, timeLimitSeconds));
+        // Student testStudent = new Student("a", "a", "a", "a", "a");
+        // studentResults.add(Grading.gradePaper(testStudent, extractFolder, testerFolder, timeLimitSeconds));
 
         return fixes;
     }

@@ -131,7 +131,7 @@ public class QuestionResult implements Cloneable {
         double maxScore = 0.0;
 
         for (CaseResult caseResult : cases.values()) {
-            maxScore += caseResult.getScore();
+            maxScore += caseResult.getMaxScore();
         }
 
         return maxScore;

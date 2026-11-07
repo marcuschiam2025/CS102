@@ -1,5 +1,3 @@
-package Q1a;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import model.Tester;
