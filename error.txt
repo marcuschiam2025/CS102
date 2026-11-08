@@ -1,7 +1,0 @@
-src\unzippedFolder\test-file.zip\Q3\Q3Part4Tester.java:18: error: cannot find symbol
-        q3Part4Tester.test(expected, Q3.sortShapes(inputs), 1, true);
-                                     ^
-  symbol:   variable Q3
-  location: class Q3Part4Tester
-1 error
-error: compilation failed

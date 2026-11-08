@@ -171,12 +171,17 @@ public class GradingMenu {
     }
 
     private void exportResults() {
-        // Shoban, Cedric: export to ctrl.getScoreSheetFile() here once
-        // grading is merged
-        ctrl.exportCSV();
-        System.out.println("Successfully exported to " + ctrl.getExportFile());
-        // System.out.println("\nNot available yet: CSV export will be "
-        //         + "added together with grading.");
+        if (!ctrl.hasResults()) {
+            System.out.println("\nNothing to export yet. Grade the "
+                    + "submissions first.");
+        } else if (ctrl.exportCSV()) {
+            System.out.println("\nSuccessfully exported to "
+                    + ctrl.getExportFile());
+        } else {
+            System.out.println("\nExport failed: could not write "
+                    + ctrl.getExportFile() + ". Close it if it is open in "
+                    + "another program (e.g. Excel) and try again.");
+        }
     }
 
     // Runs one step (or all of them) on every submission

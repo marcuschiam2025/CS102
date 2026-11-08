@@ -11,6 +11,10 @@ import model.CaseResultStatus;
 public class Grading {
     public static File errorFile = new File("error.txt");
     public static File outputFile = new File("output.txt");
+    // javac creates this next to src/model/Tester.java because "src" is on
+    // the classpath when the testers are compiled, so it is deleted after
+    // grading to keep src/ free of .class files
+    public static File testerClassFile = new File("src/model/Tester.class");
 
     private static void copyTesterFiles(File testerFolder, File questionFolder) throws IOException {
         for (File testerFile : testerFolder.listFiles()) {
@@ -41,7 +45,6 @@ public class Grading {
             while (sc.hasNext()) {
                 String partDataRaw = sc.nextLine();
                 String[] partData = partDataRaw.split("(?<!\\[[^\\]]+),");
-                System.out.println(Arrays.asList(partData));
                 if (partData.length == 6) {
                     studentResult.addCaseResult(partData[0], partData[1], Double.parseDouble(partData[5]), (Boolean.parseBoolean(partData[4]) ? CaseResultStatus.PASSED : (partData[3].equals("(Runtime Error)") ? CaseResultStatus.RUNTIME_ERROR : CaseResultStatus.FAILED)), "");
                 }
@@ -94,9 +97,10 @@ public class Grading {
 
                 try (Scanner sc = new Scanner(errorFile);) {
                     if (sc.hasNext()) {
-                        System.out.println(sc.nextLine());
-                        
-                        studentResult.addCaseResult(testerName.replaceAll("Part\\d+Tester.java$", ""), testerName.replaceAll("^Q.+Part(?=\\d+Tester\\.java)|Tester\\.java", ""), 0.0, CaseResultStatus.COMPILE_ERROR, "");
+                        // Keep the first error line as the case's details
+                        String errorLine = sc.nextLine();
+
+                        studentResult.addCaseResult(testerName.replaceAll("Part\\d+Tester.java$", ""), testerName.replaceAll("^Q.+Part(?=\\d+Tester\\.java)|Tester\\.java", ""), 0.0, CaseResultStatus.COMPILE_ERROR, errorLine);
                         continue;
                     }
                 } catch (FileNotFoundException e) {
@@ -291,6 +295,7 @@ public class Grading {
 
         outputFile.delete();
         errorFile.delete();
+        testerClassFile.delete();
 
         return studentResult;
     }

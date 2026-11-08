@@ -1,6 +1,6 @@
 package app;
 
-import filehandling.fileHandlings;
+import filehandling.FileHandlings;
 import fixer.SubmissionFixer;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,7 +19,8 @@ import model.Student;
 import model.StudentResult;
 import grading.Grading;
 import grading.GradingResultsViewer;
-import ThrowException.FileStructureChecker;
+import checker.FileStructureChecker;
+import exceptions.InvalidZipException;
 
 // Does the work behind the menu and keeps the settings. It never prints
 // anything, it only returns results so the menu can decide how to show them.
@@ -169,11 +170,19 @@ public class GradingCtrl {
         }
 
         File extractFolder = extractFolderOf(zipFile);
-        fileHandlings.deleteFolder(extractFolder);
-        fileHandlings.unzip(zipFile.getPath(), extractFolder.getPath());
+        FileHandlings.deleteFolder(extractFolder);
+        ArrayList<Exception> found;
 
-        ArrayList<Exception> found = FileStructureChecker.Structurecheck(
-                TEMPLATE_ZIP, zipFile.getPath());
+        try {
+            FileHandlings.unzip(zipFile.getPath(), extractFolder.getPath());
+            found = FileStructureChecker.structureCheck(TEMPLATE_ZIP,
+                    zipFile.getPath());
+        } catch (InvalidZipException exception) {
+            // Empty or corrupt ZIP: nothing to check or fix, so it is
+            // still graded (every question gets 0) and shows up in results
+            found = new ArrayList<>();
+            found.add(exception);
+        }
 
         // A fresh unzip undoes any earlier fixes
         foundProblems.put(zipFile.getPath(), found);
@@ -211,8 +220,14 @@ public class GradingCtrl {
             report.add("Nothing to fix.");
         } else {
             File extractFolder = extractFolderOf(zipFile);
-            report.addAll(SubmissionFixer.repairSubmission(
-                    zipFile.getPath(), extractFolder.getPath(), found));
+            ArrayList<String> fixes = SubmissionFixer.repairSubmission(
+                    zipFile.getPath(), extractFolder.getPath(), found);
+
+            if (fixes.isEmpty()) {
+                report.add("Nothing could be fixed automatically.");
+            }
+
+            report.addAll(fixes);
         }
 
         fixedSubmissions.add(zipFile.getPath());
@@ -334,8 +349,13 @@ public class GradingCtrl {
         GradingResultsViewer.viewResults(studentResults);
     }
 
-    public void exportCSV() {
+    public boolean hasResults() {
+        return !studentResults.isEmpty();
+    }
+
+    // Returns false if the file could not be written
+    public boolean exportCSV() {
         new File(EXPORT_FILE).getParentFile().mkdirs();
-        GradingResultsViewer.exportCSV(studentResults, EXPORT_FILE);
+        return GradingResultsViewer.exportCSV(studentResults, EXPORT_FILE);
     }
 }

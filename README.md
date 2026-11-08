@@ -106,16 +106,18 @@ read from it, and the exported copy has the score columns filled in.
 ```
 src/
 ├── app/              Main, GradingMenu (console UI), GradingCtrl (runs the pipeline, keeps settings)
-├── ThrowException/   FileStructureChecker (compares a submission with the template),
+├── checker/          FileStructureChecker (compares a submission with the template),
 │                     FolderNameChecker, MissingNameOrEmail
-├── OwnExceptions/    One exception type per kind of problem the checker finds
+├── exceptions/       One exception type per kind of problem found (incl. InvalidZipException
+│                     for empty or corrupt ZIPs)
 ├── fixer/            SubmissionFixer and the individual fixers (folder name, hierarchy,
 │                     misplaced files, junk files, headers), UsernameResolver
 ├── grading/          Grading: compiles and runs the testers with a time limit;
 │                     GradingResultsViewer: viewing and CSV export
-├── grader/           Grader: earlier grader for the single-file testers (not used)
 ├── model/            Student, StudentResult, QuestionResult, CaseResultStatus, Tester
-└── filehandling/     Unzipping (with zip-slip protection) and folder deletion
+├── filehandling/     FileHandlings: unzipping (zip-slip protection, empty/corrupt ZIP
+│                     detection) and folder deletion
+└── fileclasses/      FilesClass, Folder
 ```
 
 Folders created while running (safe to delete, not part of the submission):

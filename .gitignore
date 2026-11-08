@@ -20,3 +20,7 @@ studentStructure/
 
 # Graded score sheets written by "Export results to CSV"
 output/
+
+# Temporary files Grading.java writes while running the testers
+error.txt
+output.txt

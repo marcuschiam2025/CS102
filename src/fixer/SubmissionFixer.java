@@ -1,11 +1,11 @@
 package fixer;
 
-import OwnExceptions.AdditionalFileException;
-import OwnExceptions.FolderNameException;
-import OwnExceptions.MissingEmailException;
-import OwnExceptions.MissingFileException;
-import OwnExceptions.MissingFolderException;
-import OwnExceptions.MissingNameException;
+import exceptions.AdditionalFileException;
+import exceptions.FolderNameException;
+import exceptions.MissingEmailException;
+import exceptions.MissingFileException;
+import exceptions.MissingFolderException;
+import exceptions.MissingNameException;
 import java.io.File;
 import java.util.ArrayList;
 

@@ -1,4 +1,4 @@
-package OwnExceptions;
+package exceptions;
 
 public class MissingEmailException extends RuntimeException {
         public  MissingEmailException(String s){
