@@ -311,4 +311,10 @@ public class GradingMenu {
                     + ". Not changed.");
         }
     }
+
+    // Lets the console menu run by itself, now that Main opens the GUI
+    public static void main(String[] args) {
+        GradingMenu menu = new GradingMenu();
+        menu.run();
+    }
 }
