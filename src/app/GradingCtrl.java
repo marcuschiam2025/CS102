@@ -8,13 +8,13 @@ import fixer.UsernameResolver;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import ThrowException.MissingNameOrEmail;
+// import ThrowException.MissingNameOrEmail;
 import grader.Grader;
 import model.StudentResult;
-import model.Student;
-import grading.Grading;
+// import model.Student;
+// import grading.Grading;
 import grading.GradingResultsViewer;
-import ThrowException.fileStructureChecker;
+import ThrowException.FileStructureChecker;
 
 // Does the work behind the menu and keeps the settings. It never prints
 // anything, it only returns results so the menu can decide how to show them.
@@ -27,7 +27,7 @@ public class GradingCtrl {
     private static final String ZIP_EXTENSION = ".zip";
     private static final String CSV_EXTENSION = ".csv";
 
-    private String submissionsFolder = "Project sample/student-submission";
+    private String submissionsFolder = "src/student-submission";
     private String testerFolder = "Project sample/TesterFiles";
     private String scoreSheetFile = "Project sample/IS442-ScoreSheet.csv";
     private int timeLimitSeconds = DEFAULT_TIME_LIMIT;
@@ -135,9 +135,9 @@ public class GradingCtrl {
 
         // 2. Validate (Shanna, ShiYing): add here once their branch
         // is merged
-        ArrayList<Exception> exceptions = fileStructureChecker.Structurecheck("../RenameToYourUsername.zip",extractFolder.getPath());
+                ArrayList<Exception> repairProblems = FileStructureChecker.Structurecheck("src/RenameToYourUsername.zip",zipFile.getPath());;
+
         // 3. Fix
-        ArrayList<Exception> repairProblems = new ArrayList<>();
         ArrayList<String> fixes = SubmissionFixer.repairSubmission(
                 zipFile.getPath(), extractFolder.getPath(), repairProblems);
         for (Exception problem : repairProblems) {

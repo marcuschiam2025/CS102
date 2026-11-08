@@ -13,3 +13,7 @@ unzippedFolder/
 # macOS
 .DS_Store
 __MACOSX/
+
+# Folders created when FileStructureChecker unzips the template and submissions
+correctStructure/
+studentStructure/
