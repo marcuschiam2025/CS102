@@ -16,7 +16,7 @@ public class Grading {
         for (File testerFile : testerFolder.listFiles()) {
             File questionFile = new File(questionFolder, testerFolder.getName().replaceAll("(?<=Q\\d+).+", "") + "/" + testerFile.getName());
             
-            if (testerFile.getName().endsWith(".java")) {
+            if (testerFile.getName().endsWith(".java") || testerFile.getName().endsWith(".class")) {
                 Files.copy(testerFile.toPath(), questionFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
         }
