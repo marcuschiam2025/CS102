@@ -24,14 +24,14 @@ public abstract class Tester {
         System.out.print(testerName.replaceAll("^Q.+Part(?=.+Tester)|Tester", "") + ",");
     }
     
-    public void test(Object expected, Object actual, double points) {
+    public void test(Object expected, Object actual, double points, boolean useToString) {
         try {
             printResultBase();
 
             System.out.print(expected + ",");
             System.out.print(actual + ",");
 
-            if (expected.equals(actual)) {
+            if (expected.equals((useToString) ? actual.toString() : actual)) {
                 System.out.println("true," + points);
                 addPoints(points);
             } else {
@@ -40,6 +40,10 @@ public abstract class Tester {
         } catch (Exception e) {
             catchException(e);
         }
+    }
+
+    public void test(Object expected, Object actual, double points) {
+        test(expected, actual, points, false);
     }
 
     public void printResult(Object expected, Object actual, boolean passed, double points) {

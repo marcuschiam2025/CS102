@@ -14,7 +14,7 @@ public class Q3Part3Tester extends Tester {
         inputs.add(new Rectangle("R1", 10000, 2));
         inputs.add(new Rectangle("R2", 5, 3));
         String expected = "[C2=>28.0:19.0, R2=>15.0:16.0]";
-        q3Part3Tester.test(expected, Q3.sortShapes(inputs), 1);
+        q3Part3Tester.test(expected, Q3.sortShapes(inputs), 1, true);
 
         return q3Part3Tester.getPoints();
     }

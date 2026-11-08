@@ -42,7 +42,9 @@ public class Grading {
                 String partDataRaw = sc.nextLine();
                 String[] partData = partDataRaw.split("(?<!\\[[^\\]]+),");
                 System.out.println(Arrays.asList(partData));
-                studentResult.addCaseResult(partData[0], partData[1], Double.parseDouble(partData[5]), (Boolean.parseBoolean(partData[4]) ? CaseResultStatus.PASSED : (partData[3].equals("(Runtime Error)") ? CaseResultStatus.RUNTIME_ERROR : CaseResultStatus.FAILED)), "");
+                if (partData.length == 6) {
+                    studentResult.addCaseResult(partData[0], partData[1], Double.parseDouble(partData[5]), (Boolean.parseBoolean(partData[4]) ? CaseResultStatus.PASSED : (partData[3].equals("(Runtime Error)") ? CaseResultStatus.RUNTIME_ERROR : CaseResultStatus.FAILED)), "");
+                }
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -107,6 +109,7 @@ public class Grading {
         Path questionTesterPath = FileSystems.getDefault().getPath(questionFolders.getPath(), "QuestionTester.java");
         File questionTester = null;
 
+        // what happens when a question folder is missing? give 0 points
         try {
             questionTester = Files.createFile(questionTesterPath).toFile();
         } catch (FileNotFoundException e) {
@@ -206,10 +209,50 @@ public class Grading {
         return success;
     }
 
+    private static File loadCorrectFile(File questionFolder, ArrayList<String> questionsToCheck, boolean found) {
+        // loop until there is Q1/Q2/Q3 etc
+        File copyQuestionFolder = new File(questionFolder.getPath());
+
+        try {
+            ArrayList<String> questionFolderString = new ArrayList<String>();
+            File[] questionFolderFiles = questionFolder.listFiles();
+            for (File newQuestionFolder : questionFolderFiles) {
+                questionFolderString.add(newQuestionFolder.getName());
+            }
+
+            if (questionFolderString.containsAll(questionsToCheck)) {
+                found = true;
+                return questionFolder;
+            } else {
+                for (File newQuestionFolder : questionFolderFiles) {
+                    questionFolder = loadCorrectFile(newQuestionFolder, questionsToCheck, found);
+
+                    if (found) {
+                        return questionFolder;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Something went wrong!");
+        }
+
+        return copyQuestionFolder;
+    }
+
     public static StudentResult gradePaper(Student student, File questionFolder, String testerFolder, int timeLimitSeconds) {
         StudentResult studentResult = new StudentResult(student);
         HashMap<String, ArrayList<String>> questionAndCaseIds = studentResult.getQuestionAndCaseIds();
+
+        ArrayList<String> questionsToCheck = new ArrayList<String>();
+
+        for (String question : questionAndCaseIds.keySet()) {
+            if (!questionsToCheck.contains(question)) {
+                questionsToCheck.add(question.replaceAll("(?<=Q\\d+).+", ""));
+            }
+        }
         
+        questionFolder = loadCorrectFile(questionFolder, questionsToCheck, false);
+
         boolean success = runAllTesterFiles(questionAndCaseIds, questionFolder, testerFolder, timeLimitSeconds);
 
         ArrayList<File> existingQuestionFiles = new ArrayList<File>();
@@ -245,7 +288,8 @@ public class Grading {
     public static void main(String[] args) {
         StudentResult.loadQuestionResultTemplate();
         Student student = new Student("a", "a", "a", "a", "a");
-        File questionFolder = new File("src/unzippedFolder/2023-2024-chee.teo.2022.zip");
+        // make sure it traverses until it reaches Q1/Q2/Q3 etc.
+        File questionFolder = new File("src\\unzippedFolder\\test-file.zip");
         String testerFolder = "Project sample/TesterFiles";
         int timeLimitSeconds = 5;
         System.out.println(Grading.gradePaper(student, questionFolder, testerFolder, timeLimitSeconds));

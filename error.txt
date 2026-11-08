@@ -1,0 +1,37 @@
+src\unzippedFolder\test-file.zip\Q3\Q3Part4Tester.java:11: error: cannot find symbol
+        ArrayList<Shape> inputs = new ArrayList<>();
+                  ^
+  symbol:   class Shape
+  location: class Q3Part4Tester
+src\unzippedFolder\test-file.zip\Q3\Q3Part4Tester.java:12: error: cannot find symbol
+        inputs.add(new Circle("C1", 5));
+                       ^
+  symbol:   class Circle
+  location: class Q3Part4Tester
+src\unzippedFolder\test-file.zip\Q3\Q3Part4Tester.java:13: error: cannot find symbol
+        inputs.add(new Circle("C2", 3));
+                       ^
+  symbol:   class Circle
+  location: class Q3Part4Tester
+src\unzippedFolder\test-file.zip\Q3\Q3Part4Tester.java:14: error: cannot find symbol
+        inputs.add(new Rectangle("R2", 8, 3));
+                       ^
+  symbol:   class Rectangle
+  location: class Q3Part4Tester
+src\unzippedFolder\test-file.zip\Q3\Q3Part4Tester.java:15: error: cannot find symbol
+        inputs.add(new Rectangle("R1", 12, 2));
+                       ^
+  symbol:   class Rectangle
+  location: class Q3Part4Tester
+src\unzippedFolder\test-file.zip\Q3\Q3Part4Tester.java:16: error: cannot find symbol
+        inputs.add(new Rectangle("R3", 4, 6));
+                       ^
+  symbol:   class Rectangle
+  location: class Q3Part4Tester
+src\unzippedFolder\test-file.zip\Q3\Q3Part4Tester.java:18: error: cannot find symbol
+        q3Part4Tester.test(expected, Q3.sortShapes(inputs), 1, true);
+                                     ^
+  symbol:   variable Q3
+  location: class Q3Part4Tester
+7 errors
+error: compilation failed
