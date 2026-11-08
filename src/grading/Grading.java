@@ -75,6 +75,10 @@ public class Grading {
                     Process process = questionPb.start();
                     // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
                     success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
+                    // Stop programs that run too long (e.g. infinite loops)
+                    if (!success) {
+                        process.destroyForcibly();
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (ArrayIndexOutOfBoundsException e) {
@@ -166,7 +170,9 @@ public class Grading {
         try {
             Process process = questionPb.start();
             // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
-            process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
+            if (!process.waitFor(timeLimitSeconds, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -195,6 +201,10 @@ public class Grading {
             Process process = questionPb.start();
             // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
             success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
+            // Stop programs that run too long (e.g. infinite loops)
+            if (!success) {
+                process.destroyForcibly();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ArrayIndexOutOfBoundsException e) {

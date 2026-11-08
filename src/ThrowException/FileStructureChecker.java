@@ -34,6 +34,10 @@ public class FileStructureChecker {
                     .map(path -> root.relativize(path)
                             .toString()
                             .replace("\\", "/"))
+                    // The api folder (exam Javadoc) and macOS .DS_Store
+                    // files are not the student's work, so skip them
+                    .filter(path -> !("/" + path + "/").contains("/api/")
+                            && !path.endsWith(".DS_Store"))
                     .collect(Collectors.toSet());
         }
     }
@@ -57,6 +61,8 @@ public class FileStructureChecker {
 
             // Step 2: Unzip the student's submission
             try {
+                // Clear the previous student's files first
+                fileHandlings.deleteFolder(new File("studentStructure"));
                 fileHandlings.unzip(
                         checkStructure,
                         "studentStructure");
