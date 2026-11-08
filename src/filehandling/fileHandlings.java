@@ -75,39 +75,6 @@ public class fileHandlings {
         }
     }
 
-    public static ArrayList<FilesClass> viewFilesAndFolders(String directoryPath) throws IOException {
-        // Path of the specific directory
-
-        // Using File class create an object for specific directory
-        File directory = new File(directoryPath);
-
-        // Using listFiles method we get all the files of a directory
-        // return type of listFiles is array
-        File[] files = directory.listFiles();
-        ArrayList<FilesClass> newArray = new ArrayList<>();
-        // Print name of the all files present in that path
-        if (files != null) {
-            for (File file : files) {
-                loopThrough(file, newArray, file.getName());
-            }
-        }
-        return newArray;
-    }
-
-    public static void loopThrough(File fileParams, ArrayList<FilesClass> fileClassParams, String parentName) {
-        File[] filesInside = fileParams.listFiles();
-        if (filesInside != null) {
-            Folder newFolder = new Folder(fileParams.getName(), parentName);
-            ArrayList<FilesClass> newFile = new ArrayList<>();
-            for (File filesInsideFolder : filesInside) {
-                loopThrough(filesInsideFolder, newFile, fileParams.getName());
-            }
-            newFolder.setFilesInsideFolder(newFile);
-            fileClassParams.add(newFolder);
-        } else {
-            fileClassParams.add(new FilesClass(fileParams.getName(), parentName));
-        }
-    }
 
     // Deletes a folder and everything inside it, if it exists
     public static void deleteFolder(File folder) {
