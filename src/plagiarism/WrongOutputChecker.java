@@ -13,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import filehandling.fileHandlings;
+import filehandling.FileHandlings;
 import fixer.UsernameResolver;
 import grading.Grading;
 import model.Student;
@@ -158,7 +158,7 @@ public class WrongOutputChecker {
             File templateFolder, String testerFolder, int timeLimitSeconds)
             throws IOException {
         File templateCopy = new File(unzipFolder, TEMPLATE_COPY_FOLDER);
-        fileHandlings.deleteFolder(templateCopy);
+        FileHandlings.deleteFolder(templateCopy);
         copyFolder(templateFolder.toPath(), templateCopy.toPath());
 
         Student templateStudent = new Student("", TEMPLATE_USERNAME, "", "",

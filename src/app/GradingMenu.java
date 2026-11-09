@@ -23,7 +23,8 @@ public class GradingMenu {
     private static final int RUN_ALL = 6;
     private static final int RUN_ALL_ONE = 7;
     private static final int SETTINGS = 8;
-    private static final int EXIT = 9;
+    private static final int PLAGIARISM_CHECK = 9;
+    private static final int EXIT = 10;
 
     // Settings menu options
     private static final int SET_SUBMISSIONS_FOLDER = 1;
@@ -236,7 +237,7 @@ public class GradingMenu {
         }
     }
 
-    private void processAllSubmissions() {
+    private void processAllSubmissions(Step step) {
         File[] zipFiles = getZipFiles();
 
         if (zipFiles == null) {

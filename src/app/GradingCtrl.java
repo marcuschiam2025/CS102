@@ -21,7 +21,6 @@ import grading.Grading;
 import grading.GradingResultsViewer;
 import plagiarism.SuspiciousPair;
 import plagiarism.WrongOutputChecker;
-import ThrowException.FileStructureChecker;
 import checker.FileStructureChecker;
 import exceptions.InvalidZipException;
 
