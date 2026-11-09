@@ -1,6 +1,6 @@
 package app;
 
-import filehandling.FileHandlings;
+import fileHandling.FileHandlings;
 import fixer.SubmissionFixer;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -51,6 +51,7 @@ public class GradingCtrl {
     private String submissionsFolder = "src/student-submission";
     private String testerFolder = "Project sample/TesterFiles";
     private String scoreSheetFile = "Project sample/IS442-ScoreSheet.csv";
+    private String studentResultTemplateFile = "Project sample/StudentResultTemplate.csv";
     private int timeLimitSeconds = DEFAULT_TIME_LIMIT;
 
     private ArrayList<StudentResult> studentResults = new ArrayList<>();
@@ -71,6 +72,10 @@ public class GradingCtrl {
 
     public String getScoreSheetFile() {
         return scoreSheetFile;
+    }
+
+    public String getStudentResultTemplateFile() {
+        return studentResultTemplateFile;
     }
 
     public int getTimeLimitSeconds() {
@@ -109,6 +114,19 @@ public class GradingCtrl {
         }
 
         scoreSheetFile = file;
+        return true;
+    }
+
+    // Returns false (and keeps the old file) if it is not an existing
+    // .csv file
+    public boolean setStudentResultTemplateFile(String file) {
+        boolean isCsvFile = file.toLowerCase().endsWith(CSV_EXTENSION);
+
+        if (file.isEmpty() || !isCsvFile || !new File(file).isFile()) {
+            return false;
+        }
+
+        studentResultTemplateFile = file;
         return true;
     }
 
@@ -239,7 +257,7 @@ public class GradingCtrl {
         return report;
     }
 
-    // Step 3. Grade (Phoenix): runs the testers on the fixed submission.
+    // Step 3. Grade (Cedric): runs the testers on the fixed submission.
     // If there is still no username folder, every question gets 0.
     public ArrayList<String> gradeSubmission(File zipFile) {
         ArrayList<String> report = new ArrayList<>();
@@ -374,7 +392,7 @@ public class GradingCtrl {
     // left by grading, so grade first. Highest score first.
     public ArrayList<SuspiciousPair> findSharedWrongOutputs()
             throws IOException {
-        StudentResult.loadQuestionResultTemplate();
+        StudentResult.loadStudentResultTemplate();
 
         return WrongOutputChecker.findSuspiciousPairs(new File(UNZIP_FOLDER),
                 new File(EXAM_TEMPLATE_FOLDER), testerFolder,

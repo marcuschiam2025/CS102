@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import filehandling.FileHandlings;
+import fileHandling.FileHandlings;
 
 // import java.io.IOException;
 import java.nio.file.*;

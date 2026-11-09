@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import exceptions.MissingEmailException;
 import exceptions.MissingNameException;
 // import checker.StructureChecker;
-import filehandling.FileHandlings;
+import fileHandling.FileHandlings;
 
 public class MissingNameOrEmail{
     public static ArrayList<Exception> catchMissingNames(String filePath) throws MissingNameException, MissingEmailException {

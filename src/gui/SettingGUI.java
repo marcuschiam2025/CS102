@@ -23,6 +23,7 @@ public class SettingGUI {
     private JTextField submissionsField;
     private JTextField testerField;
     private JTextField scoreSheetField;
+    private JTextField studentResultTemplateField;
     private JTextField timeLimitField;
     private JLabel settingsMessage;
 
@@ -35,6 +36,7 @@ public class SettingGUI {
         submissionsField.setText(ctrl.getSubmissionsFolder());
         testerField.setText(ctrl.getTesterFolder());
         scoreSheetField.setText(ctrl.getScoreSheetFile());
+        studentResultTemplateField.setText(ctrl.getStudentResultTemplateFile());
         timeLimitField.setText("" + ctrl.getTimeLimitSeconds());
         settingsMessage.setText(" ");
     }
@@ -54,6 +56,7 @@ public class SettingGUI {
         submissionsField = new JTextField();
         testerField = new JTextField();
         scoreSheetField = new JTextField();
+        studentResultTemplateField = new JTextField();
         timeLimitField = new JTextField();
 
         // Option 1: submission folder path
@@ -64,11 +67,15 @@ public class SettingGUI {
         form.add(createRow("Tester files folder", testerField,
                 GuiStyle.createButton("Browse...", () -> chooseFolder(testerField))));
 
-        // Option 3: pick a .csv file
+        // Option 3: pick a .csv file for score sheet
         form.add(createRow("Score sheet (CSV)", scoreSheetField,
                 GuiStyle.createButton("Browse...", () -> chooseCsvFile(scoreSheetField))));
+                
+        // Option 4: pick a .csv file for student result template
+        form.add(createRow("Student Result Template (CSV)", studentResultTemplateField,
+                GuiStyle.createButton("Browse...", () -> chooseCsvFile(studentResultTemplateField))));
 
-        // Option 4: timeLimit field
+        // Option 5: timeLimit field
         form.add(createRow("Time limit in seconds ("
                 + GradingCtrl.MIN_TIME_LIMIT + "-"
                 + GradingCtrl.MAX_TIME_LIMIT + ")", timeLimitField, null));
@@ -161,6 +168,10 @@ public class SettingGUI {
 
         if (!ctrl.setScoreSheetFile(scoreSheetField.getText().trim())) {
             errors.add("score sheet is not an existing .csv file");
+        }
+
+        if (!ctrl.setStudentResultTemplateFile(studentResultTemplateField.getText().trim())) {
+            errors.add("student result template is not an existing .csv file");
         }
 
         // The time limit is typed as text, so turn it into a number first.

@@ -160,7 +160,7 @@ public class GradingGUI {
 
     private void gradeAllSubmissions() {
         runInBackground(() -> {
-            StudentResult.loadQuestionResultTemplate();
+            StudentResult.loadStudentResultTemplate();
             log("\n" + GRADING_NOTE);
             processAllSubmissions(ctrl::gradeSubmission);
         });
@@ -168,7 +168,7 @@ public class GradingGUI {
 
     private void runAllStepsOnAll() {
         runInBackground(() -> {
-            StudentResult.loadQuestionResultTemplate();
+            StudentResult.loadStudentResultTemplate();
             log("\n" + GRADING_NOTE);
             processAllSubmissions(ctrl::processSubmission);
         });
@@ -183,7 +183,7 @@ public class GradingGUI {
         }
 
         runInBackground(() -> {
-            StudentResult.loadQuestionResultTemplate();
+            StudentResult.loadStudentResultTemplate();
             log("\n" + GRADING_NOTE);
             log("\n" + zipFile.getName());
 

@@ -8,6 +8,8 @@ import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+import app.GradingCtrl;
+
 // All question scores for one student, plus the total
 public class StudentResult {
     private Student student;
@@ -23,14 +25,13 @@ public class StudentResult {
     // grading result takes an instance of the template class and uses it to mark
 
     // template map for question results
-    public static String questionResultTemplateFilePath = "src/model/QuestionResultTemplate.csv";
-    public static HashMap<String, QuestionResult> questionResultTemplate = new HashMap<String, QuestionResult>();
+    public static HashMap<String, QuestionResult> studentResultTemplate = new HashMap<String, QuestionResult>();
 
     public StudentResult(Student student) {
         this.student = student;
 
         // prevent looking at the same HashMap address
-        for (Map.Entry<String, QuestionResult> questionResult : questionResultTemplate.entrySet()) {
+        for (Map.Entry<String, QuestionResult> questionResult : studentResultTemplate.entrySet()) {
             questionResults.put(questionResult.getKey(), questionResult.getValue().clone());
         }
     }
@@ -93,8 +94,10 @@ public class StudentResult {
         return questionIds;
     }
 
-    public static void loadQuestionResultTemplate() {
-        try (Scanner sc = new Scanner(new File(questionResultTemplateFilePath))) {
+    public static void loadStudentResultTemplate() {
+        GradingCtrl ctrl = new GradingCtrl();
+
+        try (Scanner sc = new Scanner(new File(ctrl.getStudentResultTemplateFile()))) {
             sc.nextLine();
 
             while (sc.hasNext()) {
@@ -103,10 +106,10 @@ public class StudentResult {
                 String caseId = caseData[1].trim();
                 double maxScore = Double.parseDouble(caseData[2].trim());
 
-                if (questionResultTemplate.containsKey(questionId)) {
-                    questionResultTemplate.get(questionId).addCaseResult(caseId, maxScore);
+                if (studentResultTemplate.containsKey(questionId)) {
+                    studentResultTemplate.get(questionId).addCaseResult(caseId, maxScore);
                 } else {
-                    questionResultTemplate.put(questionId, new QuestionResult(caseId, maxScore));
+                    studentResultTemplate.put(questionId, new QuestionResult(caseId, maxScore));
                 }
             }
         } catch (FileNotFoundException e) {
@@ -123,8 +126,8 @@ public class StudentResult {
 
     // main program to test the template;
     public static void main(String[] args) {
-        loadQuestionResultTemplate();
-        System.out.println(questionResultTemplate);
+        loadStudentResultTemplate();
+        System.out.println(studentResultTemplate);
         Student test = new Student("a", "a", "a", "a", "a");
         StudentResult testResult = new StudentResult(test);
         testResult.getQuestionResult("Q3").getCaseResult("4").setCaseResult(1.0, CaseResultStatus.PASSED);

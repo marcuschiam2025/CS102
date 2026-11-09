@@ -1,4 +1,4 @@
-package fileclasses;
+package fileClasses;
 import java.util.ArrayList;
 
 public class Folder extends FilesClass{

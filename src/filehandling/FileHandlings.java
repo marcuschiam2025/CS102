@@ -1,4 +1,4 @@
-package filehandling;
+package fileHandling;
 
 import java.io.EOFException;
 import java.io.File;
@@ -17,8 +17,8 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
 
 import exceptions.InvalidZipException;
-import fileclasses.FilesClass;
-import fileclasses.Folder;
+import fileClasses.FilesClass;
+import fileClasses.Folder;
 
 public class FileHandlings {
     // An empty ZIP file is only an "end of archive" record, which starts
