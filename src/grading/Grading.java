@@ -92,6 +92,22 @@ public class Grading {
             testerNames.add(testerName);
         }
 
+        // Also copy the class files given with the exam (e.g. Shape.class,
+        // DataException.class), so a student who deleted them is not
+        // marked down for it
+        File[] testerFiles = new File(testerFolder, questionId).listFiles();
+
+        if (testerFiles != null) {
+            for (File testerFile : testerFiles) {
+                if (testerFile.getName().endsWith(".class")) {
+                    File target = new File(questionFolder,
+                            testerFile.getName());
+                    Files.copy(testerFile.toPath(), target.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+
         // 2. Compile them once, together with the student's code
         File compileFile = new File(questionFolder,
                 questionId + "_compile.txt");

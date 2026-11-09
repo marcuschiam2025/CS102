@@ -17,3 +17,7 @@ __MACOSX/
 # Folders created when FileStructureChecker unzips the template and submissions
 correctStructure/
 studentStructure/
+
+# Output files written by the old grader
+/error.txt
+/output.txt
