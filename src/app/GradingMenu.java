@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 import model.StudentResult;
+import plagiarism.SharedWrongOutput;
+import plagiarism.SuspiciousPair;
 
 // Shows the menus and reads what the user types.
 // The actual work is done by GradingCtrl.
@@ -18,7 +20,8 @@ public class GradingMenu {
     private static final int VIEW_RESULTS = 4;
     private static final int EXPORT_CSV = 5;
     private static final int SETTINGS = 6;
-    private static final int EXIT = 7;
+    private static final int PLAGIARISM_CHECK = 7;
+    private static final int EXIT = 8;
 
     // Settings menu options
     private static final int SET_SUBMISSIONS_FOLDER = 1;
@@ -57,6 +60,8 @@ public class GradingMenu {
                 exportResults();
             } else if (choice == SETTINGS) {
                 settingsMenu();
+            } else if (choice == PLAGIARISM_CHECK) {
+                checkPlagiarism();
             }
         }
 
@@ -73,6 +78,8 @@ public class GradingMenu {
         System.out.println(VIEW_RESULTS + ". View results");
         System.out.println(EXPORT_CSV + ". Export results to CSV");
         System.out.println(SETTINGS + ". Settings");
+        System.out.println(PLAGIARISM_CHECK
+                + ". Check for plagiarism (shared wrong answers)");
         System.out.println(EXIT + ". Exit");
     }
 
@@ -158,6 +165,46 @@ public class GradingMenu {
         System.out.println("Successfully exported to " + ctrl.getScoreSheetFile());
         // System.out.println("\nNot available yet: CSV export will be "
         //         + "added together with grading.");
+    }
+
+    private void checkPlagiarism() {
+        System.out.println("\nChecking for shared wrong answers "
+                + "(uses the output from grading, so grade first)...");
+
+        ArrayList<SuspiciousPair> pairs;
+
+        try {
+            pairs = ctrl.findSharedWrongOutputs();
+        } catch (Exception exception) {
+            System.out.println("Failed: " + exception.getMessage());
+            return;
+        }
+
+        if (pairs.isEmpty()) {
+            System.out.println("No two students share an unusual wrong "
+                    + "answer.");
+            return;
+        }
+
+        System.out.println("These pairs gave the same wrong answers. A "
+                + "higher score means more, or rarer, shared answers.");
+        System.out.println("This is a reason to look closer, not proof.");
+
+        for (int i = 0; i < pairs.size(); i++) {
+            SuspiciousPair pair = pairs.get(i);
+            System.out.printf("%n%d. %s & %s (score %.2f)%n", i + 1,
+                    pair.getFirstUsername(), pair.getSecondUsername(),
+                    pair.getScore());
+
+            for (SharedWrongOutput wrongOutput
+                    : pair.getSharedWrongOutputs()) {
+                System.out.println("   " + wrongOutput.getQuestionId()
+                        + " case " + wrongOutput.getCaseId()
+                        + ": expected,actual = " + wrongOutput.getOutput()
+                        + " (" + wrongOutput.getUsernames().size()
+                        + " students gave this)");
+            }
+        }
     }
 
     private void processAllSubmissions() {

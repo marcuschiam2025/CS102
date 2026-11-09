@@ -13,6 +13,8 @@ import model.StudentResult;
 import model.Student;
 import grading.Grading;
 import grading.GradingResultsViewer;
+import plagiarism.SuspiciousPair;
+import plagiarism.WrongOutputChecker;
 import ThrowException.FileStructureChecker;
 
 // Does the work behind the menu and keeps the settings. It never prints
@@ -25,6 +27,9 @@ public class GradingCtrl {
     private static final String UNZIP_FOLDER = "unzippedFolder";
     private static final String ZIP_EXTENSION = ".zip";
     private static final String CSV_EXTENSION = ".csv";
+    // The blank exam, used to ignore answers from unchanged template code
+    private static final String EXAM_TEMPLATE_FOLDER =
+            "Project sample/RenameToYourUsername";
 
     private String submissionsFolder = "src/student-submission";
     private String testerFolder = "Project sample/TesterFiles";
@@ -181,6 +186,17 @@ public class GradingCtrl {
         }
 
         studentResults.add(result);
+    }
+
+    // Pairs of students who share unusual wrong answers, using the output
+    // left by grading, so grade first. Highest score first.
+    public ArrayList<SuspiciousPair> findSharedWrongOutputs()
+            throws IOException {
+        StudentResult.loadQuestionResultTemplate();
+
+        return WrongOutputChecker.findSuspiciousPairs(new File(UNZIP_FOLDER),
+                new File(EXAM_TEMPLATE_FOLDER), testerFolder,
+                timeLimitSeconds);
     }
 
     public void viewResults() {
