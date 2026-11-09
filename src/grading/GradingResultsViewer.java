@@ -36,9 +36,7 @@ public class GradingResultsViewer {
             for (StudentResult studentResult : studentResults) {
                 Student student = studentResult.getStudent();
 
-                ps.println("#" + student.getOrgDefinedId() + ",#" + student.getUsername() +
-                    "," + student.getLastName() + "," + student.getFirstName() + "," + student.getEmail() +
-                    "," + studentResult.getTotalScore() + "," + studentResult.getMaxTotalScore() + ",#");
+                ps.println("#" + student.getOrgDefinedId() + ",#" + student.getUsername().trim() +"," + student.getLastName().trim() + "," + student.getFirstName().trim() + "," + student.getEmail().trim() +"," + studentResult.getTotalScore() + "," + studentResult.getMaxTotalScore() + ",#");
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();

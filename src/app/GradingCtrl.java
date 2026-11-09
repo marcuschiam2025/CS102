@@ -134,7 +134,9 @@ public class GradingCtrl {
 
         // 2. Validate (Shanna, ShiYing): add here once their branch
         // is merged
-                ArrayList<Exception> repairProblems = FileStructureChecker.Structurecheck("src/RenameToYourUsername.zip",zipFile.getPath());;
+        ArrayList<Exception> repairProblems = FileStructureChecker.Structurecheck("src/RenameToYourUsername.zip",
+                zipFile.getPath());
+        ;
 
         // 3. Fix
         ArrayList<String> fixes = SubmissionFixer.repairSubmission(
@@ -148,8 +150,26 @@ public class GradingCtrl {
         String username = UsernameResolver.getUsername(zipFile.getPath());
 
         if (username != null) {
+            File[] javaFiles = getJavaFiles(extractFolder);
+            String lastName = "";
+            String firstName = "";
+            String email = "";
+
+            if (javaFiles != null && javaFiles.length > 0) {
+                File firstFile = javaFiles[0];
+                ArrayList<String> arrayOfJavaFileContents = fileHandlings.readFiles("\n", firstFile.getPath());
+                String name = arrayOfJavaFileContents.get(1);
+                String nameSliced = name.substring(9);
+                String[] nameSplitToLastAndFirstName = nameSliced.split(" ");
+                if (nameSplitToLastAndFirstName.length > 1) {
+                    lastName = nameSplitToLastAndFirstName[1];
+
+                }
+                firstName = nameSplitToLastAndFirstName[0];
+                email = arrayOfJavaFileContents.get(2).substring(12).trim() + "@computing.smu.edu.sg";
+            }
             // The score sheet is not read yet, so only the username is known
-            Student student = new Student("", username, "", "", "");
+            Student student = new Student("", username, lastName, firstName, email);
             File usernameFolder = new File(extractFolder, username);
             StudentResult result;
 
@@ -165,6 +185,27 @@ public class GradingCtrl {
         }
 
         return fixes;
+    }
+
+    public static File[] getJavaFiles(File directory) {
+        ArrayList<File> javaFiles = new ArrayList<>();
+
+        File[] files = directory.listFiles();
+
+        if (files == null) {
+            return new File[0];
+        }
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                javaFiles.addAll(
+                        Arrays.asList(getJavaFiles(file)));
+            } else if (file.getName().endsWith(".java")) {
+                javaFiles.add(file);
+            }
+        }
+
+        return javaFiles.toArray(new File[0]);
     }
 
     // Replaces any earlier result for the same student, so grading a
