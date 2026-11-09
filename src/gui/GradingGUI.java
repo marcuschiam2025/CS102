@@ -5,19 +5,26 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.GridLayout;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import model.StudentResult;
 
 public class GradingGUI {
 
     private static final String MAIN_SCREEN = "main";
     private static final String SETTINGS_SCREEN = "settings";
+
+    private static final String GRADING_NOTE = "Grading each test case "
+            + "on its own, this can take a few seconds per student.";
 
     private GradingCtrl ctrl;
     private JFrame frame;
@@ -28,7 +35,16 @@ public class GradingGUI {
     private JTextArea outputArea;
     private JLabel statusLabel;
 
+    // Every sidebar button, so they can be turned off while a step runs
+    private ArrayList<JButton> buttons = new ArrayList<>();
+
     private SettingGUI settings;
+
+    // One grading step run on one submission, e.g. ctrl::checkSubmission.
+    // Returns the lines to show the user. (Same idea as in GradingMenu.)
+    private interface Step {
+        ArrayList<String> run(File zipFile) throws IOException;
+    }
 
     public GradingGUI() {
         ctrl = new GradingCtrl();
@@ -75,18 +91,26 @@ public class GradingGUI {
         return main;
     }
 
-    // to create the sidebar with buttons
+    // to create the sidebar with buttons, in the same order as the
+    // console menu (GradingMenu)
     private JPanel createSidebar() {
 
         JPanel buttonList = new JPanel(new GridLayout(0, 1, GuiStyle.GAP, GuiStyle.GAP));
         buttonList.setBackground(GuiStyle.BACKGROUND);
 
-        buttonList.add(GuiStyle.createButton("Grade all", () -> log("Grade all clicked")));
-        buttonList.add(GuiStyle.createButton("Grade one", () -> log("Grade one clicked")));
-        buttonList.add(GuiStyle.createButton("Check and fix", () -> processAllSubmissions()));
-        buttonList.add(GuiStyle.createButton("View results", () -> log("View results clicked")));
-        buttonList.add(GuiStyle.createButton("Export CSV", () -> log("Export CSV clicked")));
-        buttonList.add(GuiStyle.createButton("Settings", () -> openSettings()));
+        // Grading steps
+        addButton(buttonList, "1. Check submissions", () -> checkAllSubmissions());
+        addButton(buttonList, "2. Fix submissions", () -> fixAllSubmissions());
+        addButton(buttonList, "3. Grade submissions", () -> gradeAllSubmissions());
+
+        // Results
+        addButton(buttonList, "View results", () -> viewResults());
+        addButton(buttonList, "Export CSV", () -> exportResults());
+
+        // Other
+        addButton(buttonList, "Run all steps", () -> runAllStepsOnAll());
+        addButton(buttonList, "Run all on one", () -> runAllStepsOnOne());
+        addButton(buttonList, "Settings", () -> openSettings());
 
         // Putting the grid at the NORTH of another panel stops the
         // buttons from stretching to fill the whole height
@@ -95,6 +119,13 @@ public class GradingGUI {
         sidebar.add(buttonList, BorderLayout.NORTH);
 
         return sidebar;
+    }
+
+    // Makes a styled button, adds it to the panel and remembers it
+    private void addButton(JPanel panel, String text, Runnable action) {
+        JButton button = GuiStyle.createButton(text, action);
+        buttons.add(button);
+        panel.add(button);
     }
 
     private JScrollPane createOutputArea() {
@@ -118,35 +149,81 @@ public class GradingGUI {
     }
 
 // -----------------------------------Button actions----------------------------------
-    private void processAllSubmissions() {
+
+    private void checkAllSubmissions() {
+        runInBackground(() -> processAllSubmissions(ctrl::checkSubmission));
+    }
+
+    private void fixAllSubmissions() {
+        runInBackground(() -> processAllSubmissions(ctrl::fixSubmission));
+    }
+
+    private void gradeAllSubmissions() {
+        runInBackground(() -> {
+            StudentResult.loadQuestionResultTemplate();
+            log("\n" + GRADING_NOTE);
+            processAllSubmissions(ctrl::gradeSubmission);
+        });
+    }
+
+    private void runAllStepsOnAll() {
+        runInBackground(() -> {
+            StudentResult.loadQuestionResultTemplate();
+            log("\n" + GRADING_NOTE);
+            processAllSubmissions(ctrl::processSubmission);
+        });
+    }
+
+    private void runAllStepsOnOne() {
+        // Choose on the GUI thread, then grade in the background
+        File zipFile = chooseSubmission();
+
+        if (zipFile == null) {
+            return;
+        }
+
+        runInBackground(() -> {
+            StudentResult.loadQuestionResultTemplate();
+            log("\n" + GRADING_NOTE);
+            log("\n" + zipFile.getName());
+
+            if (processSubmission(zipFile, ctrl::processSubmission)) {
+                log("\nDone.");
+            }
+        });
+    }
+
+    private void viewResults() {
+        log("\n" + ctrl.getResultsText());
+    }
+
+    private void exportResults() {
+        if (!ctrl.hasResults()) {
+            logError("Nothing to export yet. Grade the submissions first.");
+        } else if (ctrl.exportCSV()) {
+            log("\nSuccessfully exported to " + ctrl.getExportFile());
+        } else {
+            logError("Export failed: could not write " + ctrl.getExportFile()
+                    + ". Close it if it is open in another program (e.g. Excel) and try again.");
+        }
+    }
+
+    // Runs one step (or all of them) on every submission
+    private void processAllSubmissions(Step step) {
         // 1. Ask ctrl for the zip files
-        File[] zipFiles = ctrl.findZipFiles();
+        File[] zipFiles = getZipFiles();
 
         if (zipFiles == null) {
-            logError("Submissions folder not found: " + ctrl.getSubmissionsFolder());
             return;
         }
 
-        if (zipFiles.length == 0) {
-            logError("No ZIP files found in " + ctrl.getSubmissionsFolder());
-            return;
-        }
-
-        // 2. Process each zip and show the fixes
+        // 2. Process each zip and show what happened
         int failed = 0;
 
         for (int i = 0; i < zipFiles.length; i++) {
             log("\n[" + (i + 1) + "/" + zipFiles.length + "] " + zipFiles[i].getName());
 
-            try {
-                ArrayList<String> fixes = ctrl.processSubmission(zipFiles[i]);
-
-                for (String fix : fixes) {
-                    log("  - " + fix);
-                }
-            } catch (Exception exception) {
-                // One submission failing must not stop the others
-                logError("  Failed: " + exception.getMessage());
+            if (!processSubmission(zipFiles[i], step)) {
                 failed++;
             }
         }
@@ -154,6 +231,22 @@ public class GradingGUI {
         // 3. Show a summary
         int processed = zipFiles.length - failed;
         log("\nDone. " + processed + " of " + zipFiles.length + " submissions processed.");
+    }
+
+    // Returns true if the submission was processed, false if it failed.
+    // One submission failing must not stop the others.
+    private boolean processSubmission(File zipFile, Step step) {
+        try {
+            ArrayList<String> lines = step.run(zipFile);
+
+            for (String line : lines) {
+                log("  - " + line);
+            }
+            return true;
+        } catch (Exception exception) {
+            logError("  Failed: " + exception.getMessage());
+            return false;
+        }
     }
 
     // Fill the settings page with the current values, then switch to it.
@@ -165,18 +258,101 @@ public class GradingGUI {
 
     // -----------------------------------HELPER----------------------------------
 
-    // for logging will delete later
+    // Grading runs the testers, which takes a few seconds per student.
+    // Doing that on the GUI thread would freeze the window, so it runs on
+    // its own thread instead, with the buttons turned off until it is done.
+    private void runInBackground(Runnable work) {
+        setButtonsEnabled(false);
+
+        Thread worker = new Thread(() -> {
+            try {
+                work.run();
+            } finally {
+                SwingUtilities.invokeLater(() -> setButtonsEnabled(true));
+            }
+        });
+        worker.start();
+    }
+
+    private void setButtonsEnabled(boolean enabled) {
+        for (JButton button : buttons) {
+            button.setEnabled(enabled);
+        }
+    }
+
+    // Lets the user pick one submission from a drop-down list.
+    // Returns null if they cancel.
+    private File chooseSubmission() {
+        File[] zipFiles = getZipFiles();
+
+        if (zipFiles == null) {
+            return null;
+        }
+
+        String[] names = new String[zipFiles.length];
+        for (int i = 0; i < zipFiles.length; i++) {
+            names[i] = zipFiles[i].getName();
+        }
+
+        Object choice = JOptionPane.showInputDialog(frame, "Choose a submission:",
+                "Run all steps on one submission", JOptionPane.PLAIN_MESSAGE,
+                null, names, names[0]);
+
+        for (int i = 0; i < names.length; i++) {
+            if (names[i].equals(choice)) {
+                return zipFiles[i];
+            }
+        }
+
+        return null;
+    }
+
+    // Returns the zip files, or null (after telling the user why)
+    // if there are none
+    private File[] getZipFiles() {
+        File[] zipFiles = ctrl.findZipFiles();
+
+        if (zipFiles == null) {
+            logError("Submissions folder not found: " + ctrl.getSubmissionsFolder());
+            return null;
+        }
+
+        if (zipFiles.length == 0) {
+            logError("No ZIP files found in " + ctrl.getSubmissionsFolder());
+            return null;
+        }
+
+        return zipFiles;
+    }
+
+    // Shows a message in the output area and the status bar.
+    // Swing components must only be changed on the GUI thread, so this
+    // hands the change over with invokeLater (it can be called from the
+    // background thread in runInBackground).
     private void log(String message) {
-        outputArea.append(message + "\n");
-        statusLabel.setForeground(GuiStyle.TEXT);
-        statusLabel.setText(message.trim());
+        SwingUtilities.invokeLater(() -> {
+            outputArea.append(message + "\n");
+            outputArea.setCaretPosition(outputArea.getDocument().getLength());
+            statusLabel.setForeground(GuiStyle.TEXT);
+            statusLabel.setText(lastLine(message));
+        });
     }
 
     // for errors: red in the status bar, and also kept in the output area
     private void logError(String message) {
-        outputArea.append("ERROR: " + message.trim() + "\n");
-        statusLabel.setForeground(GuiStyle.ERROR);
-        statusLabel.setText(message.trim());
+        SwingUtilities.invokeLater(() -> {
+            outputArea.append("ERROR: " + message.trim() + "\n");
+            outputArea.setCaretPosition(outputArea.getDocument().getLength());
+            statusLabel.setForeground(GuiStyle.ERROR);
+            statusLabel.setText(message.trim());
+        });
+    }
+
+    // The status bar is one line, so show the last line of a long message
+    // (e.g. the results table)
+    private String lastLine(String message) {
+        String[] lines = message.trim().split("\n");
+        return lines[lines.length - 1];
     }
 
 }

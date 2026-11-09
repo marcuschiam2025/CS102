@@ -349,6 +349,11 @@ public class GradingCtrl {
         GradingResultsViewer.viewResults(studentResults);
     }
 
+    // The results table as text, for the GUI
+    public String getResultsText() {
+        return GradingResultsViewer.formatResults(studentResults);
+    }
+
     public boolean hasResults() {
         return !studentResults.isEmpty();
     }

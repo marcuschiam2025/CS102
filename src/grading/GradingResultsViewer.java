@@ -21,12 +21,19 @@ public class GradingResultsViewer {
     //   Username         Name            Q1a     Q1b   ...  Total
     //   ping.lee.2023    PING LEE        3/3     3/3   ...  20/20
     public static void viewResults(ArrayList<StudentResult> studentResults) {
+        System.out.println();
+        System.out.print(formatResults(studentResults));
+    }
+
+    // Builds the same table as viewResults as one String, one line per
+    // student, so the GUI can show it too
+    public static String formatResults(
+            ArrayList<StudentResult> studentResults) {
         if (studentResults.isEmpty()) {
-            System.out.println("\nNo results yet. Grade the submissions "
-                    + "first.");
-            return;
+            return "No results yet. Grade the submissions first.\n";
         }
 
+        StringBuilder table = new StringBuilder();
         ArrayList<StudentResult> sorted = new ArrayList<>(studentResults);
         sorted.sort(Comparator.comparing(
                 result -> result.getStudent().getUsername()));
@@ -45,9 +52,8 @@ public class GradingResultsViewer {
         }
         header.append("Total");
 
-        System.out.println();
-        System.out.println(header);
-        System.out.println("-".repeat(header.length()));
+        table.append(header).append("\n");
+        table.append("-".repeat(header.length())).append("\n");
 
         for (StudentResult studentResult : sorted) {
             Student student = studentResult.getStudent();
@@ -67,8 +73,10 @@ public class GradingResultsViewer {
 
             row.append(formatScore(studentResult.getTotalScore()) + "/"
                     + formatScore(studentResult.getMaxTotalScore()));
-            System.out.println(row);
+            table.append(row).append("\n");
         }
+
+        return table.toString();
     }
 
     // 3.0 -> "3", 2.5 -> "2.5"
