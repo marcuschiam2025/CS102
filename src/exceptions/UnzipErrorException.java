@@ -1,4 +1,4 @@
-package OwnExceptions;
+package exceptions;
 
 public class UnzipErrorException extends RuntimeException{
     public UnzipErrorException(String message) {

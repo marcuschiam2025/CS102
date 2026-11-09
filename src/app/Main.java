@@ -1,8 +1,10 @@
 package app;
 
+import gui.GradingGUI;
+
 public class Main {
     public static void main(String[] args) {
-        GradingMenu menu = new GradingMenu();
-        menu.run();
+        GradingGUI gui = new GradingGUI();
+        gui.show();
     }
 }

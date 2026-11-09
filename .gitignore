@@ -18,6 +18,9 @@ __MACOSX/
 correctStructure/
 studentStructure/
 
+# Graded score sheets written by "Export results to CSV"
+output/
+
 # Output files written by the old grader
 /error.txt
 /output.txt

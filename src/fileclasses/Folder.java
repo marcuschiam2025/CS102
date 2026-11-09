@@ -1,4 +1,4 @@
-package fileClasses;
+package fileclasses;
 import java.util.ArrayList;
 
 public class Folder extends FilesClass{
@@ -6,8 +6,8 @@ public class Folder extends FilesClass{
     public  Folder(String nameOfFolder, String parentName){
         super(nameOfFolder, parentName);
     }
-    public  void  setFilesInsideFolder(ArrayList<FilesClass> FilesParam){
-        this.filesInsideFolder = FilesParam;
+    public  void  setFilesInsideFolder(ArrayList<FilesClass> filesParam){
+        this.filesInsideFolder = filesParam;
     }
     public  ArrayList<FilesClass> retrieveFilesInsideFolder(){
         return  this.filesInsideFolder;

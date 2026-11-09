@@ -1,25 +1,32 @@
 package fixer;
 
-import OwnExceptions.FolderNameException;
-import OwnExceptions.MissingFolderException;
+import exceptions.AdditionalFileException;
+import exceptions.FolderNameException;
+import exceptions.MissingEmailException;
+import exceptions.MissingFileException;
+import exceptions.MissingFolderException;
+import exceptions.MissingNameException;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 
+// Repairs a submission based on the problems FileStructureChecker found.
+// Only the fixers that match those problems are run:
+//
+//   AdditionalFileException                  -> JunkFileCleaner
+//   (always)                                 -> NestedFolderFixer
+//   FolderNameException, MissingFolderException -> HierarchyFixer,
+//                                               then FolderNameFixer
+//   MissingFileException, MissingFolderException -> MisplacedFileFixer
+//   MissingNameException, MissingEmailException  -> HeaderFixer
+//
+// Returns a message for every fix. Anything that could not be done is
+// added as "Could not fix: ...". The checker is run again afterwards
+// (in GradingCtrl) to report what is still wrong.
 public class SubmissionFixer {
     private static final String[] QUESTIONS = { "Q1", "Q2", "Q3" };
 
     public static ArrayList<String> repairSubmission(String zipFilePath,
-            String extractedDirectory) {
-        ArrayList<Exception> problems = new ArrayList<>();
-        ArrayList<String> messages = repairSubmission(zipFilePath,
-                extractedDirectory, problems);
-        addProblemMessages(messages, problems);
-        return messages;
-    }
-
-    public static ArrayList<String> repairSubmission(String zipFilePath,
-            String extractedDirectory, ArrayList<Exception> problems) {
+            String extractedDirectory, ArrayList<Exception> foundProblems) {
         ArrayList<String> messages = new ArrayList<>();
 
         String username = UsernameResolver.getUsername(zipFilePath);
@@ -30,70 +37,67 @@ public class SubmissionFixer {
         }
 
         String studentName = UsernameResolver.getStudentName(username);
-
-        if (studentName.isEmpty()) {
-            messages.add("Cannot derive student name from ZIP filename.");
-            return messages;
-        }
-
         File root = new File(extractedDirectory).getAbsoluteFile();
-        if (!root.isDirectory() && !root.mkdirs() && !root.isDirectory()) {
-            problems.add(new IOException(
-                    "Cannot create extraction folder " + root + "."));
-        }
-
         File usernameFolder = new File(root, username);
 
-        // 0. Remove junk files first, so a __MACOSX folder is not mistaken
-        //    for the student's folder.
-        JunkFileCleaner.clean(root, messages, problems);
+        // Problems that happen while fixing, e.g. a rename that fails
+        ArrayList<Exception> fixProblems = new ArrayList<>();
 
-        // 1. Rename a wrongly named top-level folder.
-        FolderNameFixer.fix(root, username, messages, problems);
-
-        // 2. Move question folders into the username folder.
-        HierarchyFixer.fix(root, usernameFolder, QUESTIONS, messages,
-                problems);
-
-        if (usernameFolder.isDirectory()) {
-            // 3. Move files that are in the wrong question folder.
-            MisplacedFileFixer.fix(usernameFolder, messages, problems);
-
-            // 4. Check Java comments inside Q1, Q2 and Q3.
-            HeaderFixer.fix(usernameFolder, username, studentName, messages,
-                    problems);
+        // 1. Remove junk first, so a __MACOSX folder is not mistaken
+        //    for the student's folder
+        if (hasProblem(foundProblems, AdditionalFileException.class)) {
+            JunkFileCleaner.clean(root, messages, fixProblems);
         }
 
-        checkRemainingProblems(usernameFolder, problems);
+        // 2. Pull Q1/Q2/Q3 out of any extra folders, e.g.
+        //    MyExam/<username>/Q1 or <username>/<username>/Q1. Always run:
+        //    it checks the layout itself, and the grader needs
+        //    <username>/Q1 exactly.
+        NestedFolderFixer.fix(root, usernameFolder, messages, fixProblems);
 
-        if (messages.isEmpty() && problems.isEmpty()) {
-            messages.add("No targeted errors found.");
+        // 3. Get the username folder right. HierarchyFixer goes first so
+        //    that Q1/Q2/Q3 at the top are moved, not renamed.
+        if (hasProblem(foundProblems, FolderNameException.class)
+                || hasProblem(foundProblems, MissingFolderException.class)) {
+            HierarchyFixer.fix(root, usernameFolder, QUESTIONS, messages,
+                    fixProblems);
+            FolderNameFixer.fix(root, username, messages, fixProblems);
+        }
+
+        if (usernameFolder.isDirectory()) {
+            // 4. Move files into the right question folder
+            if (hasProblem(foundProblems, MissingFileException.class)
+                    || hasProblem(foundProblems,
+                            MissingFolderException.class)) {
+                MisplacedFileFixer.fix(usernameFolder, messages,
+                        fixProblems);
+            }
+
+            // 5. Fix the name/email comment in the .java files
+            if (hasProblem(foundProblems, MissingNameException.class)
+                    || hasProblem(foundProblems,
+                            MissingEmailException.class)) {
+                HeaderFixer.fix(usernameFolder, username, studentName,
+                        messages, fixProblems);
+            }
+        }
+
+        for (Exception problem : fixProblems) {
+            messages.add("Could not fix: " + problem.getMessage());
         }
 
         return messages;
     }
 
-    private static void checkRemainingProblems(File usernameFolder,
-            ArrayList<Exception> problems) {
-        if (!usernameFolder.isDirectory()) {
-            problems.add(new FolderNameException(
-                    "The username folder is still missing after repair."));
-            return;
-        }
-
-        for (String question : QUESTIONS) {
-            if (!new File(usernameFolder, question).isDirectory()) {
-                problems.add(new MissingFolderException(
-                        "Missing question folder after repair: " + question));
+    // True if any of the problems is of this exception type
+    private static boolean hasProblem(ArrayList<Exception> problems,
+            Class<? extends Exception> type) {
+        for (Exception problem : problems) {
+            if (type.isInstance(problem)) {
+                return true;
             }
         }
-    }
 
-    private static void addProblemMessages(ArrayList<String> messages,
-            ArrayList<Exception> problems) {
-        for (Exception problem : problems) {
-            messages.add("Problem [" + problem.getClass().getSimpleName()
-                    + "]: " + problem.getMessage());
-        }
+        return false;
     }
 }
