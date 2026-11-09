@@ -3,6 +3,7 @@ package grading;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -16,11 +17,15 @@ public class GradingResultsViewer {
             Student student = studentResult.getStudent();
             HashMap<String, QuestionResult> questionResults = studentResult.getQuestionResults();
 
-            System.out.print("Student ID: " + student.getOrgDefinedId() + ", ");
+            System.out.print(student.getUsername() + ": ");
 
-            for (Map.Entry<String, QuestionResult> questionResult : questionResults.entrySet()) {
-                System.out.println(questionResult.getKey() + ": " + questionResult.getValue().getScore() + ", ");
+            // TreeMap so the questions are shown in order (Q1a, Q1b, ...)
+            for (Map.Entry<String, QuestionResult> questionResult : new TreeMap<>(questionResults).entrySet()) {
+                QuestionResult result = questionResult.getValue();
+                System.out.print(questionResult.getKey() + " " + result.getScore() + "/" + result.getMaxScore() + "  ");
             }
+
+            System.out.println("Total: " + studentResult.getTotalScore() + "/" + studentResult.getMaxTotalScore());
         }
     }
 

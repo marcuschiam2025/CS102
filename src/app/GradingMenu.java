@@ -27,8 +27,8 @@ public class GradingMenu {
     private static final int SET_TIME_LIMIT = 4;
     private static final int BACK = 5;
 
-    private static final String NOT_GRADING_YET = "Note: validation and "
-            + "grading are not added yet, so only unzip and fix will run.";
+    private static final String GRADING_NOTE = "Grading each test case "
+            + "on its own, this can take a few seconds per student.";
 
     private Scanner sc;
     private GradingCtrl ctrl;
@@ -123,7 +123,7 @@ public class GradingMenu {
 
     private void gradeAllSubmissions() {
         StudentResult.loadQuestionResultTemplate();
-        System.out.println("\n" + NOT_GRADING_YET);
+        System.out.println("\n" + GRADING_NOTE);
         processAllSubmissions();
     }
 
@@ -135,7 +135,7 @@ public class GradingMenu {
         }
 
         StudentResult.loadQuestionResultTemplate();
-        System.out.println("\n" + NOT_GRADING_YET);
+        System.out.println("\n" + GRADING_NOTE);
         System.out.println("\n" + zipFile.getName());
 
         if (processSubmission(zipFile)) {

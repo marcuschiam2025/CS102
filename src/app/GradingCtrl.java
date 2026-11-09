@@ -9,10 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 // import ThrowException.MissingNameOrEmail;
-import grader.Grader;
 import model.StudentResult;
-// import model.Student;
-// import grading.Grading;
+import model.Student;
+import grading.Grading;
 import grading.GradingResultsViewer;
 import ThrowException.FileStructureChecker;
 
@@ -145,25 +144,43 @@ public class GradingCtrl {
                     + "]: " + problem.getMessage());
         }
 
-        // 4. Grade (Shoban, Cedric): add here once grading is merged,
-        // using testerFolder and timeLimitSeconds
-
+        // 4. Grade
         String username = UsernameResolver.getUsername(zipFile.getPath());
 
-        if (username != null && new File(extractFolder, username).isDirectory()) {
+        if (username != null) {
+            // The score sheet is not read yet, so only the username is known
+            Student student = new Student("", username, "", "", "");
             File usernameFolder = new File(extractFolder, username);
-            // grade checker: grade Q1a, Q1b, Q2a, Q2b, Q3
-            Grader.gradeSubmission(new File(testerFolder), usernameFolder, 
-                    timeLimitSeconds);
-        } else {
-            // can't grade: every question gets 0
+            StudentResult result;
+
+            if (usernameFolder.isDirectory()) {
+                result = Grading.gradePaper(student, usernameFolder,
+                        testerFolder, timeLimitSeconds);
+            } else {
+                // Can't grade: every case keeps its default of 0
+                result = new StudentResult(student);
+            }
+
+            saveResult(result);
         }
-        // using testerFolder and timeLimitSeconds
-        // temporary student for debug
-        // Student testStudent = new Student("a", "a", "a", "a", "a");
-        // studentResults.add(Grading.gradePaper(testStudent, extractFolder, testerFolder, timeLimitSeconds));
 
         return fixes;
+    }
+
+    // Replaces any earlier result for the same student, so grading a
+    // student again does not add a second row
+    private void saveResult(StudentResult result) {
+        String username = result.getStudent().getUsername();
+
+        for (int i = 0; i < studentResults.size(); i++) {
+            if (studentResults.get(i).getStudent().getUsername()
+                    .equals(username)) {
+                studentResults.remove(i);
+                break;
+            }
+        }
+
+        studentResults.add(result);
     }
 
     public void viewResults() {
