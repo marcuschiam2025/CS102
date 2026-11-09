@@ -112,7 +112,7 @@ public class QuestionResult implements Cloneable {
     public CaseResult getCaseResult(String caseId) {
         return cases.get(caseId);
     }
-    
+
     public HashMap<String, CaseResult> getCases() {
         return cases;
     }
@@ -135,6 +135,12 @@ public class QuestionResult implements Cloneable {
         }
 
         return maxScore;
+    }
+
+    // Max score of one case, or 0 if there is no such case
+    public double getCaseMaxScore(String caseId) {
+        CaseResult caseResult = cases.get(caseId);
+        return caseResult == null ? 0.0 : caseResult.getMaxScore();
     }
 
     public ArrayList<String> getCaseIds() {
@@ -163,7 +169,7 @@ public class QuestionResult implements Cloneable {
         for (Map.Entry<String, CaseResult> caseResult : cases.entrySet()) {
             questionResultNew.addCaseResult(caseResult.getKey().toString(), Double.valueOf(caseResult.getValue().getMaxScore()));
         }
-        
+
         return questionResultNew;
     }
 

@@ -17,3 +17,10 @@ __MACOSX/
 # Folders created when FileStructureChecker unzips the template and submissions
 correctStructure/
 studentStructure/
+
+# Graded score sheets written by "Export results to CSV"
+output/
+
+# Output files written by the old grader
+/error.txt
+/output.txt

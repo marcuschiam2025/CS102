@@ -1,7 +1,5 @@
 package fixer;
 
-import OwnExceptions.MissingEmailException;
-import OwnExceptions.MissingNameException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -17,6 +15,11 @@ public class HeaderFixer {
     // then "Name" and ":" (any case)
     private static final Pattern NAME_LINE =
             Pattern.compile("(?im)^\\s*\\*?\\s*Name\\s*:.*$");
+
+    // A Name line that already has a name after the colon. A name the
+    // student wrote themselves (e.g. a longer full name) is kept.
+    private static final Pattern FILLED_NAME_LINE =
+            Pattern.compile("(?im)^[ \\t]*\\*?[ \\t]*Name[ \\t]*:[ \\t]*\\S.*$");
 
     // A line like " * Email ID: ping.lee.2023", with at least one space
     // between "Email" and "ID"
@@ -52,34 +55,10 @@ public class HeaderFixer {
                 }
             } catch (FileNotFoundException exception) {
                 problems.add(exception);
-                continue;
-            }
-
-            try {
-                validateHeader(javaFile, username, studentName, problems);
-            } catch (FileNotFoundException exception) {
-                problems.add(exception);
             }
         }
-    }
-
-    private static void validateHeader(File javaFile, String username,
-            String studentName, ArrayList<Exception> problems)
-            throws FileNotFoundException {
-        String content = readWholeFile(javaFile);
-        String nameLine = "(?im)^\\s*\\*?\\s*Name\\s*:\\s*"
-                + Pattern.quote(studentName) + "\\s*$";
-        String emailLine = "(?im)^\\s*\\*?\\s*Email\\s+ID\\s*:\\s*"
-                + Pattern.quote(username) + "\\s*$";
-
-        if (!Pattern.compile(nameLine).matcher(content).find()) {
-            problems.add(new MissingNameException(javaFile.getPath()
-                    + " is still missing the expected student name."));
-        }
-        if (!Pattern.compile(emailLine).matcher(content).find()) {
-            problems.add(new MissingEmailException(javaFile.getPath()
-                    + " is still missing the expected student email."));
-        }
+        // Whether the headers are now correct is checked by running
+        // FileStructureChecker again after fixing
     }
 
     // Adds every .java file in the folder and its subfolders to the list
@@ -139,7 +118,9 @@ public class HeaderFixer {
         String updatedComment = comment;
         boolean changed = false;
 
-        if (NAME_LINE.matcher(updatedComment).find()) {
+        if (FILLED_NAME_LINE.matcher(updatedComment).find()) {
+            // Keep the name the student wrote
+        } else if (NAME_LINE.matcher(updatedComment).find()) {
             updatedComment = NAME_LINE.matcher(updatedComment)
                     .replaceFirst(Matcher.quoteReplacement(nameLine));
         } else {
@@ -147,7 +128,15 @@ public class HeaderFixer {
             changed = true;
         }
 
-        if (EMAIL_LINE.matcher(updatedComment).find()) {
+        // Already correct: the username, or the full address starting
+        // with it (e.g. ping.lee.2023@computing.smu.edu.sg). Keep it.
+        Pattern correctEmail = Pattern.compile("(?im)^[ \\t]*\\*?[ \\t]*Email"
+                + "[ \\t]+ID[ \\t]*:[ \\t]*" + Pattern.quote(username)
+                + "(@\\S+)?[ \\t]*\\r?$");
+
+        if (correctEmail.matcher(updatedComment).find()) {
+            // Keep the email the student wrote
+        } else if (EMAIL_LINE.matcher(updatedComment).find()) {
             updatedComment = EMAIL_LINE.matcher(updatedComment)
                     .replaceFirst(Matcher.quoteReplacement(emailLine));
         } else {
