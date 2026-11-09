@@ -1,6 +1,7 @@
 package app;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import model.StudentResult;
@@ -13,15 +14,16 @@ public class GradingMenu {
     private static final int NO_MORE_INPUT = -1;
     private static final int GO_BACK = 0;
 
-    // Main menu options
-    private static final int GRADE_ALL = 1;
-    private static final int GRADE_ONE = 2;
-    private static final int CHECK_AND_FIX = 3;
+    // Main menu options, in the order the work is done
+    private static final int CHECK = 1;
+    private static final int FIX = 2;
+    private static final int GRADE = 3;
     private static final int VIEW_RESULTS = 4;
     private static final int EXPORT_CSV = 5;
-    private static final int SETTINGS = 6;
-    private static final int PLAGIARISM_CHECK = 7;
-    private static final int EXIT = 8;
+    private static final int RUN_ALL = 6;
+    private static final int RUN_ALL_ONE = 7;
+    private static final int SETTINGS = 8;
+    private static final int EXIT = 9;
 
     // Settings menu options
     private static final int SET_SUBMISSIONS_FOLDER = 1;
@@ -46,18 +48,22 @@ public class GradingMenu {
 
         while (choice != EXIT && choice != NO_MORE_INPUT) {
             displayMainMenu();
-            choice = readNumber("Enter your choice: ", GRADE_ALL, EXIT);
+            choice = readNumber("Enter your choice: ", CHECK, EXIT);
 
-            if (choice == GRADE_ALL) {
+            if (choice == CHECK) {
+                processAllSubmissions(ctrl::checkSubmission);
+            } else if (choice == FIX) {
+                processAllSubmissions(ctrl::fixSubmission);
+            } else if (choice == GRADE) {
                 gradeAllSubmissions();
-            } else if (choice == GRADE_ONE) {
-                gradeOneSubmission();
-            } else if (choice == CHECK_AND_FIX) {
-                processAllSubmissions();
             } else if (choice == VIEW_RESULTS) {
                 viewResults();
             } else if (choice == EXPORT_CSV) {
                 exportResults();
+            } else if (choice == RUN_ALL) {
+                runAllStepsOnAll();
+            } else if (choice == RUN_ALL_ONE) {
+                runAllStepsOnOne();
             } else if (choice == SETTINGS) {
                 settingsMenu();
             } else if (choice == PLAGIARISM_CHECK) {
@@ -71,16 +77,28 @@ public class GradingMenu {
 
     private void displayMainMenu() {
         System.out.println("\n========== Auto Grading System ==========");
-        System.out.println(GRADE_ALL + ". Grade all submissions");
-        System.out.println(GRADE_ONE + ". Grade one submission");
-        System.out.println(CHECK_AND_FIX
-                + ". Check and fix submissions only (no grading)");
+        System.out.println("-- Grading steps --");
+        System.out.println(CHECK + ". Check submissions   (find problems)");
+        System.out.println(FIX + ". Fix submissions     (repair what was "
+                + "found)");
+        System.out.println(GRADE + ". Grade submissions   (run the testers)");
+        System.out.println("-- Results --");
         System.out.println(VIEW_RESULTS + ". View results");
         System.out.println(EXPORT_CSV + ". Export results to CSV");
+        System.out.println("-- Other --");
+        System.out.println(RUN_ALL + ". Run all steps (" + CHECK + " -> "
+                + FIX + " -> " + GRADE + ") on all submissions");
+        System.out.println(RUN_ALL_ONE + ". Run all steps on one submission");
         System.out.println(SETTINGS + ". Settings");
         System.out.println(PLAGIARISM_CHECK
                 + ". Check for plagiarism (shared wrong answers)");
         System.out.println(EXIT + ". Exit");
+    }
+
+    // One grading step run on one submission, e.g. ctrl::checkSubmission.
+    // Returns the lines to show the user.
+    private interface Step {
+        ArrayList<String> run(File zipFile) throws IOException;
     }
 
     // ---------- Reading input ----------
@@ -131,10 +149,16 @@ public class GradingMenu {
     private void gradeAllSubmissions() {
         StudentResult.loadQuestionResultTemplate();
         System.out.println("\n" + GRADING_NOTE);
-        processAllSubmissions();
+        processAllSubmissions(ctrl::gradeSubmission);
     }
 
-    private void gradeOneSubmission() {
+    private void runAllStepsOnAll() {
+        StudentResult.loadQuestionResultTemplate();
+        System.out.println("\n" + GRADING_NOTE);
+        processAllSubmissions(ctrl::processSubmission);
+    }
+
+    private void runAllStepsOnOne() {
         File zipFile = chooseSubmission();
 
         if (zipFile == null) {
@@ -145,7 +169,7 @@ public class GradingMenu {
         System.out.println("\n" + GRADING_NOTE);
         System.out.println("\n" + zipFile.getName());
 
-        if (processSubmission(zipFile)) {
+        if (processSubmission(zipFile, ctrl::processSubmission)) {
             System.out.println("\nDone.");
         }
     }
@@ -159,12 +183,17 @@ public class GradingMenu {
     }
 
     private void exportResults() {
-        // Shoban, Cedric: export to ctrl.getScoreSheetFile() here once
-        // grading is merged
-        ctrl.exportCSV();
-        System.out.println("Successfully exported to " + ctrl.getScoreSheetFile());
-        // System.out.println("\nNot available yet: CSV export will be "
-        //         + "added together with grading.");
+        if (!ctrl.hasResults()) {
+            System.out.println("\nNothing to export yet. Grade the "
+                    + "submissions first.");
+        } else if (ctrl.exportCSV()) {
+            System.out.println("\nSuccessfully exported to "
+                    + ctrl.getExportFile());
+        } else {
+            System.out.println("\nExport failed: could not write "
+                    + ctrl.getExportFile() + ". Close it if it is open in "
+                    + "another program (e.g. Excel) and try again.");
+        }
     }
 
     private void checkPlagiarism() {
@@ -220,7 +249,7 @@ public class GradingMenu {
             System.out.println("\n[" + (i + 1) + "/" + zipFiles.length
                     + "] " + zipFiles[i].getName());
 
-            if (!processSubmission(zipFiles[i])) {
+            if (!processSubmission(zipFiles[i], step)) {
                 failed++;
             }
         }
@@ -232,9 +261,9 @@ public class GradingMenu {
 
     // Returns true if the submission was processed, false if it failed.
     // One submission failing must not stop the others.
-    private boolean processSubmission(File zipFile) {
+    private boolean processSubmission(File zipFile, Step step) {
         try {
-            ArrayList<String> fixes = ctrl.processSubmission(zipFile);
+            ArrayList<String> fixes = step.run(zipFile);
 
             for (String fix : fixes) {
                 System.out.println("  - " + fix);
@@ -357,5 +386,11 @@ public class GradingMenu {
             System.out.println(errorMessage + ": " + input
                     + ". Not changed.");
         }
+    }
+
+    // Lets the console menu run by itself, now that Main opens the GUI
+    public static void main(String[] args) {
+        GradingMenu menu = new GradingMenu();
+        menu.run();
     }
 }

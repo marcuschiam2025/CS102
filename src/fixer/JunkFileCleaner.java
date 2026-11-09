@@ -1,6 +1,6 @@
 package fixer;
 
-import filehandling.fileHandlings;
+import filehandling.FileHandlings;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public class JunkFileCleaner {
 
             if (item.isDirectory()) {
                 if (name.equals(MAC_FOLDER)) {
-                    fileHandlings.deleteFolder(item);
+                    FileHandlings.deleteFolder(item);
                     if (item.exists()) {
                         problems.add(new IOException("Cannot remove "
                                 + MAC_FOLDER + " folder."));
