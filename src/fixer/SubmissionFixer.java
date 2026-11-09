@@ -13,6 +13,7 @@ import java.util.ArrayList;
 // Only the fixers that match those problems are run:
 //
 //   AdditionalFileException                  -> JunkFileCleaner
+//   (always)                                 -> NestedFolderFixer
 //   FolderNameException, MissingFolderException -> HierarchyFixer,
 //                                               then FolderNameFixer
 //   MissingFileException, MissingFolderException -> MisplacedFileFixer
@@ -48,7 +49,13 @@ public class SubmissionFixer {
             JunkFileCleaner.clean(root, messages, fixProblems);
         }
 
-        // 2. Get the username folder right. HierarchyFixer goes first so
+        // 2. Pull Q1/Q2/Q3 out of any extra folders, e.g.
+        //    MyExam/<username>/Q1 or <username>/<username>/Q1. Always run:
+        //    it checks the layout itself, and the grader needs
+        //    <username>/Q1 exactly.
+        NestedFolderFixer.fix(root, usernameFolder, messages, fixProblems);
+
+        // 3. Get the username folder right. HierarchyFixer goes first so
         //    that Q1/Q2/Q3 at the top are moved, not renamed.
         if (hasProblem(foundProblems, FolderNameException.class)
                 || hasProblem(foundProblems, MissingFolderException.class)) {
@@ -58,7 +65,7 @@ public class SubmissionFixer {
         }
 
         if (usernameFolder.isDirectory()) {
-            // 3. Move files into the right question folder
+            // 4. Move files into the right question folder
             if (hasProblem(foundProblems, MissingFileException.class)
                     || hasProblem(foundProblems,
                             MissingFolderException.class)) {
@@ -66,7 +73,7 @@ public class SubmissionFixer {
                         fixProblems);
             }
 
-            // 4. Fix the name/email comment in the .java files
+            // 5. Fix the name/email comment in the .java files
             if (hasProblem(foundProblems, MissingNameException.class)
                     || hasProblem(foundProblems,
                             MissingEmailException.class)) {
