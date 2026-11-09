@@ -38,6 +38,13 @@ public class GradingGUI {
     // Every sidebar button, so they can be turned off while a step runs
     private ArrayList<JButton> buttons = new ArrayList<>();
 
+    // Steps 2 and 3 stay locked until the step before them has run
+    // (or "Run all steps" has run, which does all three)
+    private JButton fixButton;
+    private JButton gradeButton;
+    private boolean checkDone = false;
+    private boolean fixDone = false;
+
     private SettingGUI settings;
 
     // One grading step run on one submission, e.g. ctrl::checkSubmission.
@@ -100,8 +107,9 @@ public class GradingGUI {
 
         // Grading steps
         addButton(buttonList, "1. Check submissions", () -> checkAllSubmissions());
-        addButton(buttonList, "2. Fix submissions", () -> fixAllSubmissions());
-        addButton(buttonList, "3. Grade submissions", () -> gradeAllSubmissions());
+        fixButton = addButton(buttonList, "2. Fix submissions", () -> fixAllSubmissions());
+        gradeButton = addButton(buttonList, "3. Grade submissions", () -> gradeAllSubmissions());
+        updateStepButtons();
 
         // Results
         addButton(buttonList, "View results", () -> viewResults());
@@ -122,10 +130,11 @@ public class GradingGUI {
     }
 
     // Makes a styled button, adds it to the panel and remembers it
-    private void addButton(JPanel panel, String text, Runnable action) {
+    private JButton addButton(JPanel panel, String text, Runnable action) {
         JButton button = GuiStyle.createButton(text, action);
         buttons.add(button);
         panel.add(button);
+        return button;
     }
 
     private JScrollPane createOutputArea() {
@@ -151,11 +160,19 @@ public class GradingGUI {
 // -----------------------------------Button actions----------------------------------
 
     private void checkAllSubmissions() {
-        runInBackground(() -> processAllSubmissions(ctrl::checkSubmission));
+        runInBackground(() -> {
+            if (processAllSubmissions(ctrl::checkSubmission)) {
+                checkDone = true;
+            }
+        });
     }
 
     private void fixAllSubmissions() {
-        runInBackground(() -> processAllSubmissions(ctrl::fixSubmission));
+        runInBackground(() -> {
+            if (processAllSubmissions(ctrl::fixSubmission)) {
+                fixDone = true;
+            }
+        });
     }
 
     private void gradeAllSubmissions() {
@@ -170,7 +187,10 @@ public class GradingGUI {
         runInBackground(() -> {
             StudentResult.loadQuestionResultTemplate();
             log("\n" + GRADING_NOTE);
-            processAllSubmissions(ctrl::processSubmission);
+            if (processAllSubmissions(ctrl::processSubmission)) {
+                checkDone = true;
+                fixDone = true;
+            }
         });
     }
 
@@ -208,13 +228,14 @@ public class GradingGUI {
         }
     }
 
-    // Runs one step (or all of them) on every submission
-    private void processAllSubmissions(Step step) {
+    // Runs one step (or all of them) on every submission.
+    // Returns false if there were no submissions to run it on.
+    private boolean processAllSubmissions(Step step) {
         // 1. Ask ctrl for the zip files
         File[] zipFiles = getZipFiles();
 
         if (zipFiles == null) {
-            return;
+            return false;
         }
 
         // 2. Process each zip and show what happened
@@ -231,6 +252,7 @@ public class GradingGUI {
         // 3. Show a summary
         int processed = zipFiles.length - failed;
         log("\nDone. " + processed + " of " + zipFiles.length + " submissions processed.");
+        return true;
     }
 
     // Returns true if the submission was processed, false if it failed.
@@ -278,6 +300,16 @@ public class GradingGUI {
         for (JButton button : buttons) {
             button.setEnabled(enabled);
         }
+
+        if (enabled) {
+            updateStepButtons();
+        }
+    }
+
+    // Only unlock a step once the step before it has run
+    private void updateStepButtons() {
+        fixButton.setEnabled(checkDone);
+        gradeButton.setEnabled(fixDone);
     }
 
     // Lets the user pick one submission from a drop-down list.
