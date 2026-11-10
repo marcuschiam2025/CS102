@@ -62,7 +62,7 @@ public class SubmissionFixer {
                 || hasProblem(foundProblems, MissingFolderException.class)) {
             HierarchyFixer.hierarchyFix(root, usernameFolder, QUESTIONS, messages,
                     fixProblems);
-            FolderNameFixer.foldNameFix(root, username, messages, fixProblems);
+            FolderNameFixer.folderNameFix(root, username, messages, fixProblems);
         }
 
         if (usernameFolder.isDirectory()) {
