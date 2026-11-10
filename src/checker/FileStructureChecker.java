@@ -2,20 +2,13 @@ package checker;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
+import java.util.stream.*;
 
 import fileHandling.FileHandlings;
 
-// import java.io.IOException;
 import java.nio.file.*;
-// import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Comparator;
-// import java.util.stream.Stream;
+
 
 import exceptions.*;
 
@@ -76,6 +69,7 @@ public class FileStructureChecker {
             Path studWork = Paths.get("studentStructure");
             Path root;
 
+            // Find the root folder of the student's submission
             try (Stream<Path> paths = Files.list(studWork)) {
                 root = paths
                         .filter(Files::isDirectory)
@@ -91,6 +85,7 @@ public class FileStructureChecker {
                 Set<String> expectedStructure = FileStructureChecker.getStructure(expectedRoot);
                 Set<String> studentStructure = FileStructureChecker.getStructure(studentRoot);
 
+                // Compare the two structures and find missing and extra files
                 Set<String> missing = new HashSet<>(expectedStructure);
                 missing.removeAll(studentStructure);
 
@@ -137,6 +132,8 @@ public class FileStructureChecker {
                                     .matches("Q\\d+"));
 
                     if (!expectedHasQuestions) {
+                        // If the expected structure doesn't have question folders, stop checking and
+                        // return the folder name exception
                         exceptions.add(new FileStructureException(
                                 "No question folders found in expected structure."));
                         return exceptions;
@@ -152,24 +149,31 @@ public class FileStructureChecker {
                     questionRoot = root.getParent();
                 }
 
+                // Now check each expected question folder against the student's submission
                 try (Stream<Path> paths = Files.list(expectedRoot)) {
                     List<Path> questionFolders = paths
                             .filter(Files::isDirectory)
                             .filter(p -> p.getFileName().toString()
                                     .matches("Q\\d+"))
-                            .collect(Collectors.toList());
+                            .collect(Collectors.toList()); // Use List to preserve order
 
+                    // Check each expected question folder against the student's submission
                     for (Path expectedQuestion : questionFolders) {
-                        String questionName = expectedQuestion.getFileName().toString();
+                        String questionName = expectedQuestion.getFileName().toString(); // Get the folder name (e.g.,
+                                                                                         // "Q1", "Q2", etc.)
 
-                        Path studentQuestion = questionRoot.resolve(questionName);
+                        Path studentQuestion = questionRoot.resolve(questionName); // Resolve the expected question
+                                                                                   // folder name against the student's
+                                                                                   // root
 
+                        // Check if the student's question folder exists and is a directory
                         if (!Files.isDirectory(studentQuestion)) {
                             exceptions.add(new MissingFolderException(
                                     "Missing folder: " + questionName));
                             continue;
                         }
 
+                        // Compare the structures of the expected and student's question folders
                         Set<String> expectedStructure = FileStructureChecker.getStructure(expectedQuestion);
 
                         Set<String> studentStructure = FileStructureChecker.getStructure(studentQuestion);
@@ -219,72 +223,73 @@ public class FileStructureChecker {
         return exceptions;
     }
 
-    public static void main(String[] args) {
+    // test FileStructureChecker
+    // public static void main(String[] args) {
 
-        String rightStructure = "src/RenameToYourUsername.zip";
+    // String rightStructure = "src/RenameToYourUsername.zip";
 
-        // Folder containing all students' ZIP submissions
-        File studentFolder = new File("src/student-submission");
+    // // Folder containing all students' ZIP submissions
+    // File studentFolder = new File("src/student-submission");
 
-        // Get all files inside the folder
-        File[] studentFiles = studentFolder.listFiles();
+    // // Get all files inside the folder
+    // File[] studentFiles = studentFolder.listFiles();
 
-        if (studentFiles == null) {
-            System.out.println("Unable to find student-submission folder.");
-            System.out.println("Working directory: "
-                    + System.getProperty("user.dir"));
-            return;
-        }
+    // if (studentFiles == null) {
+    // System.out.println("Unable to find student-submission folder.");
+    // System.out.println("Working directory: "
+    // + System.getProperty("user.dir"));
+    // return;
+    // }
 
-        int totalStudents = 0;
-        int passedStudents = 0;
-        int failedStudents = 0;
+    // int totalStudents = 0;
+    // int passedStudents = 0;
+    // int failedStudents = 0;
 
-        // Loop through every file
-        for (File studentZip : studentFiles) {
+    // // Loop through every file
+    // for (File studentZip : studentFiles) {
 
-            // Only process ZIP files
-            if (studentZip.isFile() &&
-                    studentZip.getName().toLowerCase().endsWith(".zip")) {
+    // // Only process ZIP files
+    // if (studentZip.isFile() &&
+    // studentZip.getName().toLowerCase().endsWith(".zip")) {
 
-                totalStudents++;
+    // totalStudents++;
 
-                System.out.println("\n================================");
-                System.out.println("Checking student: " + studentZip.getName());
-                System.out.println("================================");
+    // System.out.println("\n================================");
+    // System.out.println("Checking student: " + studentZip.getName());
+    // System.out.println("================================");
 
-                try {
-                    ArrayList<Exception> exceptions = structureCheck(
-                            rightStructure,
-                            studentZip.getPath());
+    // try {
+    // ArrayList<Exception> exceptions = structureCheck(
+    // rightStructure,
+    // studentZip.getPath());
 
-                    if (exceptions.isEmpty()) {
-                        passedStudents++;
-                        System.out.println("No exceptions found!");
-                    } else {
-                        failedStudents++;
-                        System.out.println("Exceptions found:");
+    // if (exceptions.isEmpty()) {
+    // passedStudents++;
+    // System.out.println("No exceptions found!");
+    // } else {
+    // failedStudents++;
+    // System.out.println("Exceptions found:");
 
-                        for (Exception e : exceptions) {
-                            System.err.println(e);
-                            System.out.println("- " + e.getMessage());
-                        }
-                    }
+    // for (Exception e : exceptions) {
+    // System.err.println(e);
+    // System.out.println("- " + e.getMessage());
+    // }
+    // }
 
-                } catch (IOException e) {
-                    failedStudents++;
-                    System.err.println(
-                            "Error checking " + studentZip.getName()
-                                    + ": " + e.getMessage());
-                }
-            }
-        }
+    // } catch (IOException e) {
+    // failedStudents++;
+    // System.err.println(
+    // "Error checking " + studentZip.getName()
+    // + ": " + e.getMessage());
+    // }
+    // }
+    // }
 
-        // Display overall results
-        System.out.println("\n========== SUMMARY ==========");
-        System.out.println("Total students checked: " + totalStudents);
-        System.out.println("Passed: " + passedStudents);
-        System.out.println("Failed: " + failedStudents);
-    }
+    // // Display overall results
+    // System.out.println("\n========== SUMMARY ==========");
+    // System.out.println("Total students checked: " + totalStudents);
+    // System.out.println("Passed: " + passedStudents);
+    // System.out.println("Failed: " + failedStudents);
+    // }
 
 }
