@@ -67,6 +67,13 @@ public class GradingGUI {
     }
 
     public void show() {
+        // EXIT_ON_CLOSE ends this program and all its threads, but not the
+        // java/javac processes grading started (Windows keeps them running).
+        // This runs as the program exits and stops any that are left.
+        Runtime.getRuntime().addShutdownHook(new Thread(() ->
+                ProcessHandle.current().descendants()
+                        .forEach(ProcessHandle::destroyForcibly)));
+
         SwingUtilities.invokeLater(() -> {
 
             frame = new JFrame("Auto Grading System");
