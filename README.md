@@ -35,12 +35,12 @@ From the project folder:
 | `compile.bat` | `sh compile.sh` |
 | `run.bat` | `sh run.sh` |
 
-The compile script puts the compiled program in `classes/`.
+The compile script puts the compiled program in `src/classes/`.
 
 **Always compile before running, and start the app with the run script.**
-Grading uses `classes/model/Tester.class` (the base class of every tester), and
+Grading uses `src/classes/model/Tester.class` (the base class of every tester), and
 all paths are relative to the project folder. If you start the app from an IDE's
-Run button instead, `classes/` may be empty or out of date and every tester will
+Run button instead, `src/classes/` may be empty or out of date and every tester will
 fail to compile.
 
 ## Using the application
@@ -92,7 +92,7 @@ setting.
 
 Closing the window stops any tester still running and deletes the files the
 program made: `unzippedFolder/`, `correctStructure/`, `studentStructure/`,
-`error.txt` and `output.txt`. **`output/` and `classes/` are kept.**
+`error.txt` and `output.txt`. **`output/` and `src/classes/` are kept.**
 
 Results are only kept in memory, so **export the CSV and run the plagiarism
 check before you close**.
@@ -150,5 +150,5 @@ src/
 ```
 
 Folders created while running (not part of the submission):
-`classes/`, `unzippedFolder/`, `correctStructure/`, `studentStructure/`, `output/`.
-All except `classes/` and `output/` are deleted when the program closes.
+`src/classes/`, `unzippedFolder/`, `correctStructure/`, `studentStructure/`, `output/`.
+All except `src/classes/` and `output/` are deleted when the program closes.

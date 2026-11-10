@@ -7,6 +7,8 @@ import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+// Co-authored with Claude
+
 // All question scores for one student, plus the total
 public class StudentResult {
     private Student student;
@@ -72,8 +74,20 @@ public class StudentResult {
 
     public void addCaseResult(String questionId, String caseId,
             double score, CaseResultStatus status, String details) {
-        this.questionResults.get(questionId).getCaseResult(caseId)
-                .setCaseResult(score, status, details);
+        // Skip a question or case that is not in the student result
+        // template (e.g. a tester that was not added to the CSV), instead
+        // of crashing
+        QuestionResult questionResult = questionResults.get(questionId);
+        if (questionResult == null) {
+            return;
+        }
+
+        CaseResult caseResult = questionResult.getCaseResult(caseId);
+        if (caseResult == null) {
+            return;
+        }
+
+        caseResult.setCaseResult(score, status, details);
     }
 
     // Returns the result for one question, e.g. "Q1a",
@@ -146,17 +160,5 @@ public class StudentResult {
         return "StudentResult [username=" + student.getUsername()
                 + ", totalScore=" + getTotalScore()
                 + "/" + getMaxTotalScore() + "]";
-    }
-
-    // main program to test the template;
-    public static void main(String[] args) {
-        loadStudentResultTemplate("Project sample/StudentResultTemplate.csv");
-        System.out.println(studentResultTemplate);
-        Student test = new Student("a", "a", "a", "a", "a");
-        StudentResult testResult = new StudentResult(test);
-        testResult.getQuestionResult("Q3").getCaseResult("4")
-                .setCaseResult(1.0, CaseResultStatus.PASSED);
-        System.out.println(testResult.getTotalScore()
-                == new StudentResult(test).getTotalScore());
     }
 }

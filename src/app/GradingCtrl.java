@@ -362,7 +362,7 @@ public class GradingCtrl {
 
     // Deletes the files the program made while running, so nothing is left
     // behind after it closes. Keeps output/ (the exported results) and
-    // classes/ (the compiled program, needed by run.bat).
+    // src/classes/ (the compiled program, needed by run.bat).
     public void deleteGeneratedFiles() {
         FileHandlings.deleteFolder(new File(UNZIP_FOLDER));
         // made by FileStructureChecker

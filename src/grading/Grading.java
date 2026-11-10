@@ -4,6 +4,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.nio.file.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import model.StudentResult;
 import model.Student;
 import model.CaseResultStatus;
@@ -13,6 +15,9 @@ import model.CaseResultStatus;
 public class Grading {
     public static File errorFile = new File("error.txt");
     public static File outputFile = new File("output.txt");
+    // The compiled app (made by compile.bat / compile.sh), which holds
+    // model/Tester.class that every tester extends
+    private static final String CLASSES_FOLDER = "src/classes";
 
     private static void copyTesterFiles(File testerFolder, File questionFolder) throws IOException {
         for (File testerFile : testerFolder.listFiles()) {
@@ -38,21 +43,58 @@ public class Grading {
         return output;
     }
 
-    private static void readOutputFile(StudentResult studentResult) {
+    // A result line is: question,case,expected,actual,passed,points
+    // e.g. "Q1a,2,[alice, ben],[alice],false,0.0". The question and case are
+    // read from the start and passed/points from the end, so commas inside
+    // expected/actual (e.g. "{a=1, b=2}") do not matter. Anything the
+    // student's code printed before the result on the same line is skipped.
+    private static final Pattern RESULT_LINE = Pattern.compile(
+            "^.*?(Q\\d+[a-z]?),(\\d+),(.*),(true|false),(-?\\d+(?:\\.\\d+)?)$");
+    private static final String RUNTIME_ERROR_TEXT = "(Runtime Error)";
+
+    // Reads the tester output and returns how many results it found
+    private static int readOutputFile(StudentResult studentResult) {
+        int resultCount = 0;
+
         try (Scanner sc = new Scanner(outputFile);) {
-            while (sc.hasNext()) {
-                String partDataRaw = sc.nextLine();
-                String[] partData = partDataRaw.split("(?<!\\[[^\\]]+),");
-                if (partData.length == 6) {
-                    studentResult.addCaseResult(partData[0], partData[1], Double.parseDouble(partData[5]), (Boolean.parseBoolean(partData[4]) ? CaseResultStatus.PASSED : (partData[3].equals("(Runtime Error)") ? CaseResultStatus.RUNTIME_ERROR : CaseResultStatus.FAILED)), "");
+            while (sc.hasNextLine()) {
+                Matcher result = RESULT_LINE.matcher(sc.nextLine().trim());
+
+                if (!result.matches()) {
+                    continue;
                 }
+
+                CaseResultStatus status;
+                if (Boolean.parseBoolean(result.group(4))) {
+                    status = CaseResultStatus.PASSED;
+                } else if (result.group(3).endsWith(RUNTIME_ERROR_TEXT)) {
+                    status = CaseResultStatus.RUNTIME_ERROR;
+                } else {
+                    status = CaseResultStatus.FAILED;
+                }
+
+                studentResult.addCaseResult(result.group(1), result.group(2), Double.parseDouble(result.group(5)), status, "");
+                resultCount++;
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
+        return resultCount;
     }
 
-    // This function is co-authored with Claude
+    // True if the error output shows the code did not compile, e.g.
+    // "Q1a.java:5: error: ';' expected" or "error: compilation failed"
+    private static boolean hasCompileError(ArrayList<String> errorText) {
+        for (String line : errorText) {
+            if (line.contains("error:") || line.contains("compilation failed")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // Compiles each student file (e.g. Q2a.java) on its own, so one file that
     // does not compile (e.g. Q3.java) does not stop the others from compiling
     private static void compileStudentFiles(File[] files, int timeLimitSeconds) {
@@ -66,7 +108,7 @@ public class Grading {
             ArrayList<String> commands = new ArrayList<>();
             commands.add("javac");
             commands.add("-cp");
-            commands.add("classes" + File.pathSeparator + file.getParent());
+            commands.add(CLASSES_FOLDER +File.pathSeparator + file.getParent());
             commands.add("-d");
             commands.add(file.getParent());
             commands.add(file.getPath());
@@ -113,7 +155,6 @@ public class Grading {
     private static void runTesterFiles(File[] testerFiles, File questionFolder, int timeLimitSeconds, StudentResult studentResult) {
         // the testers below are run as source files, which does not compile the
         // student's code, so compile it first
-        // This line is co-authored with Claude
         compileStudentFiles(testerFiles, timeLimitSeconds);
 
         for (File testerFile : testerFiles) {
@@ -125,8 +166,7 @@ public class Grading {
                 ArrayList<String> commands = new ArrayList<>();
                 commands.add("java");
                 commands.add("-cp");
-                // File.pathSeparator co-authored with Claude
-                commands.add("classes" + File.pathSeparator + testerFile.getParent());
+                commands.add(CLASSES_FOLDER +File.pathSeparator + testerFile.getParent());
                 commands.add(testerFile + "");
 
                 questionPb.command(commands);
@@ -141,7 +181,6 @@ public class Grading {
                     // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
                     success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
 
-                    // This if block is co-authored with Claude
                     if (!success) {
                         // Still running after the time limit, so stop it
                         process.destroyForcibly();
@@ -157,21 +196,22 @@ public class Grading {
                 // e.g. Q1aPart2Tester.java -> Q1/Q1aPart2Tester_output.txt
                 saveOutput(testerFile.getParentFile(), testerName.replaceAll("\\.java$", ""), testerName.replaceAll("Part\\d+Tester.java$", ""));
 
+                String questionId = testerName.replaceAll("Part\\d+Tester.java$", "");
+                String caseId = testerName.replaceAll("^Q.+Part(?=\\d+Tester\\.java)|Tester\\.java", "");
+
                 if (!success) {
-                    studentResult.addCaseResult(testerName.replaceAll("Part\\d+Tester.java$", ""), testerName.replaceAll("^Q.+Part(?=\\d+Tester\\.java)|Tester\\.java", ""), 0.0, CaseResultStatus.TIMEOUT, "");
+                    studentResult.addCaseResult(questionId, caseId, 0.0, CaseResultStatus.TIMEOUT, "");
                     continue;
                 }
 
-                try (Scanner sc = new Scanner(errorFile);) {
-                    if (sc.hasNext()) {
-                        studentResult.addCaseResult(testerName.replaceAll("Part\\d+Tester.java$", ""), testerName.replaceAll("^Q.+Part(?=\\d+Tester\\.java)|Tester\\.java", ""), 0.0, CaseResultStatus.COMPILE_ERROR, "");
-                        continue;
-                    }
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                // Use the tester's result if it printed one, even if the
+                // student's code also printed to the error output (e.g.
+                // e.printStackTrace() for a missing file). With no result,
+                // the code either did not compile or threw an exception.
+                if (readOutputFile(studentResult) == 0) {
+                    CaseResultStatus status = hasCompileError(readErrorFile()) ? CaseResultStatus.COMPILE_ERROR : CaseResultStatus.RUNTIME_ERROR;
+                    studentResult.addCaseResult(questionId, caseId, 0.0, status, "");
                 }
-
-                readOutputFile(studentResult);
             }
         }
     }
@@ -210,7 +250,14 @@ public class Grading {
 
             for (Map.Entry<String, ArrayList<String>> question : questionAndCaseIds.entrySet()) {
                 for (String caseId : question.getValue()) {
-                    ps.println("try { new " + question.getKey() + "Part" + caseId + "Tester().grade(); } catch (Exception e) { e.printStackTrace(); }");
+                    // Not every tester catches the student's exceptions, so
+                    // print a runtime error result here (Throwable also
+                    // catches errors such as StackOverflowError).
+                    // A LinkageError (e.g. NoClassDefFoundError) means the
+                    // student's class did not compile, so it is printed to
+                    // the error output instead, which makes gradePaper run
+                    // each tester on its own and mark it as a compile error.
+                    ps.println("try { new " + question.getKey() + "Part" + caseId + "Tester().grade(); } catch (LinkageError e) { e.printStackTrace(); } catch (Throwable e) { System.out.println(); System.out.println(\"" + question.getKey() + "," + caseId + ",-," + RUNTIME_ERROR_TEXT + ",false,0.0\"); }");
                 }
             }
 
@@ -225,13 +272,12 @@ public class Grading {
 
         String classPath = "";
         for (File questionFolder : Arrays.asList(questionFolders.listFiles())) {
-            // File.pathSeparator co-authored with Claude
             classPath += File.pathSeparator + questionFolder;
         }
 
         commands.add("javac");
         commands.add("-cp");
-        commands.add("classes" + classPath);
+        commands.add(CLASSES_FOLDER +classPath);
         commands.add(questionFolders + "/QuestionTester.java");
 
         questionPb.command(commands);
@@ -257,7 +303,7 @@ public class Grading {
 
         commands.add("java");
         commands.add("-cp");
-        commands.add("classes" + classPath);
+        commands.add(CLASSES_FOLDER +classPath);
         commands.add(questionFolders + "/QuestionTester.java");
 
         questionPb.command(commands);
@@ -272,7 +318,6 @@ public class Grading {
             // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
             success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
 
-            // This if block is co-authored with Claude
             if (!success) {
                 // Still running after the time limit, so stop it
                 process.destroyForcibly();
@@ -320,7 +365,16 @@ public class Grading {
 
         // if compilation error, individually mark each file
         ArrayList<String> errorText = readErrorFile();
-        if (!success || errorText.contains("error: compilation failed") || errorText.contains("Error")) {
+        // Checks every line for the text, instead of a whole line equal to
+        // "Error"
+        boolean hasError = hasCompileError(errorText);
+        for (String line : errorText) {
+            if (line.contains("Error")) {
+                hasError = true;
+            }
+        }
+
+        if (!success || hasError) {
             for (File questionTesterFolder : questionFolder.listFiles()) {
                 runTesterFiles(questionTesterFolder.listFiles(), questionFolder, timeLimitSeconds, studentResult);
             }
@@ -349,14 +403,5 @@ public class Grading {
         errorFile.delete();
 
         return studentResult;
-    }
-
-    public static void main(String[] args) {
-        StudentResult.loadStudentResultTemplate("Project sample/StudentResultTemplate.csv");
-        Student student = new Student("a", "a", "a", "a", "a");
-        // make sure it traverses until it reaches Q1/Q2/Q3 etc.
-        File questionFolder = new File("src\\unzippedFolder\\2023-2024-fen.lai.2022.zip\\RenameToYourStudentID");
-        String testerFolder = "Project sample/TesterFiles";
-        int timeLimitSeconds = 5;
     }
 }

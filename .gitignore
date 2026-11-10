@@ -1,6 +1,6 @@
-# Compiled output (compile.sh puts it in classes/, which must be empty on submission)
-classes/*
-!classes/.gitkeep
+# Compiled output (compile.sh puts it in src/classes/, which must be empty on submission)
+src/classes/*
+!src/classes/.gitkeep
 *.class
 
 # Class files that come with the exam resources are needed, so keep them

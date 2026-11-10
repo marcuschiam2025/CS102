@@ -6,11 +6,14 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.regex.Pattern;
 
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import fixer.UsernameResolver;
+
+// Co-authored with Claude
 
 // Plagiarism check 2: another student's username inside a file.
 //
@@ -57,6 +60,16 @@ public class HeaderChecker {
         return javaFiles;
     }
 
+    // True if the line has the username as a whole word, ignoring case.
+    // "david.2024" is found in "Email ID: david.2024@smu.edu.sg" or at the
+    // end of a sentence ("by david.2024."), but not inside "ian.david.2024".
+    private static boolean containsUsername(String line, String username) {
+        String wholeWord = "(?<!\\w)(?<!\\w\\.)" + Pattern.quote(username)
+                + "(?!\\w)(?!\\.\\w)";
+        return Pattern.compile(wholeWord, Pattern.CASE_INSENSITIVE)
+                .matcher(line).find();
+    }
+
     public static ArrayList<ForeignHeader> findForeignHeaders(File[] zipFiles) {
         ArrayList<ForeignHeader> found = new ArrayList<>();
         ArrayList<String> usernames = getUsernames(zipFiles);
@@ -82,7 +95,7 @@ public class HeaderChecker {
                         if (other.equals(owner)) {
                             continue;
                         }
-                        if (line.toLowerCase().contains(other.toLowerCase())) {
+                        if (containsUsername(line, other)) {
                             ForeignHeader fh = new ForeignHeader(owner, other, fileName, line.trim());
                             found.add(fh);
                         }
