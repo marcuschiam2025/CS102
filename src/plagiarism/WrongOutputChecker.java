@@ -20,28 +20,29 @@ import model.Student;
 
 // Plagiarism check 1: students who give the same wrong answer.
 //
-// Two students getting a test case right tells us nothing, because
-// everyone who is right gives the same answer. Two students getting it
-// wrong in exactly the same way is unusual, so it is worth a closer look.
-//
-// It reads the tester output that grading leaves in each student's
-// folder (e.g. Q1/Q1aTester_output.txt), so grade first.
+// Words used in this file:
+//   answer       one wrong answer to one test case, as a String[]:
+//                { questionId, caseId, "expected,actual" }
+//                e.g. { "Q2b", "3", "LEE Teck Yang-4.0,Jason LEE" }
+//   answer key   the same answer as one String, so it can be looked up:
+//                "Q2b,3,LEE Teck Yang-4.0,Jason LEE"
+//   answer group one answer and every student who gave it
+//                (a SharedWrongOutput)
+//   pair         two students and the answers they share
+//                (a SharedWrongOutputPair)
 public class WrongOutputChecker {
     // Where the blank exam template is graded, inside the unzip folder
     private static final String TEMPLATE_COPY_FOLDER = "_template";
     private static final String TEMPLATE_USERNAME = "template";
     private static final String OUTPUT_FILE_ENDING = "Tester_output.txt";
     private static final String COMPILE_FILE_ENDING = "_compile.txt";
-    // The tester prints this when the student's code threw an exception.
-    // It says nothing about the answer itself, so it is not compared.
     private static final String RUNTIME_ERROR_TEXT = "(Runtime Error)";
     // Fewer students than this and there is nothing to compare
     private static final int MIN_STUDENTS = 2;
 
-    // Grading writes one file with every case of a question,
-    // e.g. "Q1aTester_output.txt", or, if that run failed, one file per
-    // case, e.g. "Q1aPart3Tester_output.txt". Group 1 is the question.
-    private static final Pattern OUTPUT_FILE_NAME = Pattern.compile(
+    // e.g. "Q2bTester_output.txt" or "Q2bPart3Tester_output.txt".
+    // Group 1 is the question, e.g. "Q2b".
+    private static final Pattern OUTPUT_FILE_NAME_PATTERN = Pattern.compile(
             "(Q\\d+[a-z]?)(Part\\d+)?" + Pattern.quote(OUTPUT_FILE_ENDING));
 
     // Returns the pairs of students who share at least one unusual wrong
@@ -55,14 +56,14 @@ public class WrongOutputChecker {
             File unzipFolder, File templateFolder, String testerFolder,
             int timeLimitSeconds) throws IOException {
         // 1. Answers the blank template gives, e.g. Q1b's "return -1;".
-        //    A student who left the template unchanged gives these too,
-        //    which is not copying, so they are ignored.
-        HashMap<String, Boolean> templateOutputs = gradeTemplate(unzipFolder,
+        // A student who left the template unchanged gives these too,
+        // which is not copying, so they are ignored.
+        HashMap<String, Boolean> templateAnswers = gradeTemplate(unzipFolder,
                 templateFolder, testerFolder, timeLimitSeconds);
 
         // 2. Group identical wrong answers, so each one knows which
-        //    students gave it
-        HashMap<String, SharedWrongOutput> wrongOutputs = new HashMap<>();
+        // students gave it: answer key -> answer group
+        HashMap<String, SharedWrongOutput> answerGroups = new HashMap<>();
         int studentCount = 0;
 
         for (File zipFolder : listFolders(unzipFolder)) {
@@ -79,23 +80,25 @@ public class WrongOutputChecker {
                 continue;
             }
 
-            ArrayList<String[]> studentOutputs = readWrongOutputs(
+            ArrayList<String[]> studentWrongAnswers = readWrongAnswers(
                     usernameFolder);
             studentCount++;
 
-            for (String[] wrongOutput : studentOutputs) {
-                String key = toKey(wrongOutput);
+            for (String[] wrongAnswer : studentWrongAnswers) {
+                String answerKey = toAnswerKey(wrongAnswer);
 
-                if (templateOutputs.containsKey(key)) {
+                if (templateAnswers.containsKey(answerKey)) {
                     continue;
                 }
 
-                if (!wrongOutputs.containsKey(key)) {
-                    wrongOutputs.put(key, new SharedWrongOutput(
-                            wrongOutput[0], wrongOutput[1], wrongOutput[2]));
+                // The first student with this answer starts its group
+                if (!answerGroups.containsKey(answerKey)) {
+                    answerGroups.put(answerKey, new SharedWrongOutput(
+                            wrongAnswer[0], wrongAnswer[1], wrongAnswer[2]));
                 }
 
-                wrongOutputs.get(key).addUsername(username);
+                // Add this student to the group
+                answerGroups.get(answerKey).addUsername(username);
             }
         }
 
@@ -104,13 +107,14 @@ public class WrongOutputChecker {
         }
 
         // 3. Rarer answers count for more. An answer shared by 2 of 100
-        //    students is strong evidence, while one shared by 60 of them
-        //    is a common mistake. Shared by everyone gives log(1) = 0.
-        // 4. Add each shared answer to every pair of students who gave it
+        // students is strong evidence, while one shared by 60 of them
+        // is a common mistake. Shared by everyone gives log(1) = 0.
+        // 4. Add each shared answer to every pair of students who gave it:
+        // pair key -> pair
         HashMap<String, SharedWrongOutputPair> pairs = new HashMap<>();
 
-        for (SharedWrongOutput wrongOutput : wrongOutputs.values()) {
-            ArrayList<String> usernames = wrongOutput.getUsernames();
+        for (SharedWrongOutput answerGroup : answerGroups.values()) {
+            ArrayList<String> usernames = answerGroup.getUsernames();
             double weight = Math.log((double) studentCount
                     / usernames.size());
 
@@ -118,42 +122,42 @@ public class WrongOutputChecker {
                 continue;
             }
 
-            wrongOutput.setWeight(weight);
+            answerGroup.setWeight(weight);
 
             for (int i = 0; i < usernames.size(); i++) {
                 for (int j = i + 1; j < usernames.size(); j++) {
                     addToPair(pairs, usernames.get(i), usernames.get(j),
-                            wrongOutput);
+                            answerGroup);
                 }
             }
         }
 
-        ArrayList<SharedWrongOutputPair> sharedWrongOutputPairs = new ArrayList<>(
+        // 5. Highest score first
+        ArrayList<SharedWrongOutputPair> sortedPairs = new ArrayList<>(
                 pairs.values());
-        sharedWrongOutputPairs.sort((first, second) -> Double.compare(
-                second.getScore(), first.getScore()));
+        sortedPairs.sort((pair1, pair2) -> Double.compare(
+                pair2.getScore(), pair1.getScore()));
 
-        // Show each pair's evidence in question order (Q1a case 1, ...)
-        for (SharedWrongOutputPair pair : sharedWrongOutputPairs) {
-            pair.getSharedWrongOutputs().sort((first, second) -> {
-                int byQuestion = first.getQuestionId().compareTo(
-                        second.getQuestionId());
+        // Show each pair's answers in question order (Q1a case 1, ...)
+        for (SharedWrongOutputPair pair : sortedPairs) {
+            pair.getSharedWrongOutputs().sort((answer1, answer2) -> {
+                int questionOrder = answer1.getQuestionId().compareTo(
+                        answer2.getQuestionId());
 
-                if (byQuestion != 0) {
-                    return byQuestion;
+                if (questionOrder != 0) {
+                    return questionOrder;
                 }
 
-                return Integer.compare(Integer.parseInt(first.getCaseId()),
-                        Integer.parseInt(second.getCaseId()));
+                return Integer.compare(Integer.parseInt(answer1.getCaseId()),
+                        Integer.parseInt(answer2.getCaseId()));
             });
         }
 
-        return sharedWrongOutputPairs;
+        return sortedPairs;
     }
 
-    // Grades a copy of the blank template and returns its wrong answers.
-    // Only the keys are used: each one is an answer the template gives,
-    // and the value is always true.
+    // Grades a copy of the blank template and returns its wrong answers,
+    // as answer keys. Only the keys are used: the value is always true.
     // A copy is used so the grader's output files do not end up in the
     // exam resources.
     private static HashMap<String, Boolean> gradeTemplate(File unzipFolder,
@@ -168,24 +172,24 @@ public class WrongOutputChecker {
         Grading.gradePaper(templateStudent, templateCopy, testerFolder,
                 timeLimitSeconds);
 
-        HashMap<String, Boolean> templateOutputs = new HashMap<>();
+        HashMap<String, Boolean> templateAnswers = new HashMap<>();
 
-        for (String[] wrongOutput : readWrongOutputs(templateCopy)) {
-            templateOutputs.put(toKey(wrongOutput), true);
+        for (String[] wrongAnswer : readWrongAnswers(templateCopy)) {
+            templateAnswers.put(toAnswerKey(wrongAnswer), true);
         }
 
-        return templateOutputs;
+        return templateAnswers;
     }
 
     // Returns every case the student got wrong, as
     // { questionId, caseId, "expected,actual" }
-    private static ArrayList<String[]> readWrongOutputs(File usernameFolder)
+    private static ArrayList<String[]> readWrongAnswers(File usernameFolder)
             throws IOException {
         // The newest result for each case, by "questionId,caseId".
         // A folder can hold both kinds of output file (e.g. one left from
         // an older grading run), so the newest file wins.
-        HashMap<String, String[]> results = new HashMap<>();
-        HashMap<String, Long> resultTimes = new HashMap<>();
+        HashMap<String, String[]> latestResults = new HashMap<>();
+        HashMap<String, Long> latestResultTimes = new HashMap<>();
 
         for (File questionFolder : listFolders(usernameFolder)) {
             File[] files = questionFolder.listFiles();
@@ -195,35 +199,40 @@ public class WrongOutputChecker {
             }
 
             for (File file : files) {
-                Matcher fileName = OUTPUT_FILE_NAME.matcher(file.getName());
+                Matcher fileNameMatch = OUTPUT_FILE_NAME_PATTERN.matcher(
+                        file.getName());
 
-                if (!fileName.matches()) {
+                // Not a tester output file, e.g. Q2b.java
+                if (!fileNameMatch.matches()) {
                     continue;
                 }
 
+                String questionId = fileNameMatch.group(1);
                 long fileTime = file.lastModified();
 
-                for (String[] result : readResults(file, fileName.group(1))) {
+                for (String[] result : readResults(file, questionId)) {
                     String caseKey = result[0] + "," + result[1];
 
-                    if (!resultTimes.containsKey(caseKey)
-                            || fileTime >= resultTimes.get(caseKey)) {
-                        results.put(caseKey, result);
-                        resultTimes.put(caseKey, fileTime);
+                    if (!latestResultTimes.containsKey(caseKey)
+                            || fileTime >= latestResultTimes.get(caseKey)) {
+                        latestResults.put(caseKey, result);
+                        latestResultTimes.put(caseKey, fileTime);
                     }
                 }
             }
         }
 
-        ArrayList<String[]> wrongOutputs = new ArrayList<>();
+        // Keep only the wrong ones: readResults leaves "expected,actual"
+        // null for a case that passed or crashed
+        ArrayList<String[]> wrongAnswers = new ArrayList<>();
 
-        for (String[] result : results.values()) {
+        for (String[] result : latestResults.values()) {
             if (result[2] != null) {
-                wrongOutputs.add(result);
+                wrongAnswers.add(result);
             }
         }
 
-        return wrongOutputs;
+        return wrongAnswers;
     }
 
     // Returns { questionId, caseId, "expected,actual" } for every case in
@@ -234,7 +243,7 @@ public class WrongOutputChecker {
         // A result line is: question,case,expected,actual,passed,marks
         // Only lines for this question are read, so anything else the
         // student's code printed is ignored.
-        Pattern resultLine = Pattern.compile(
+        Pattern resultLinePattern = Pattern.compile(
                 Pattern.quote(questionId + ",")
                         + "(\\d+),(.*),(true|false),(\\d+(\\.\\d+)?)");
 
@@ -245,16 +254,17 @@ public class WrongOutputChecker {
         ArrayList<String[]> results = new ArrayList<>();
 
         for (String line : lines) {
-            Matcher matcher = resultLine.matcher(line.trim());
+            Matcher lineMatch = resultLinePattern.matcher(line.trim());
 
-            if (!matcher.matches()) {
+            if (!lineMatch.matches()) {
                 continue;
             }
 
-            String caseId = matcher.group(1);
-            String expectedAndActual = matcher.group(2);
-            double marks = Double.parseDouble(matcher.group(4));
+            String caseId = lineMatch.group(1);
+            String expectedAndActual = lineMatch.group(2);
+            double marks = Double.parseDouble(lineMatch.group(4));
 
+            // Got marks (right) or crashed: not a wrong answer
             if (marks > 0 || expectedAndActual.endsWith(RUNTIME_ERROR_TEXT)) {
                 expectedAndActual = null;
             }
@@ -290,25 +300,27 @@ public class WrongOutputChecker {
     // come in
     private static void addToPair(HashMap<String, SharedWrongOutputPair> pairs,
             String firstUsername, String secondUsername,
-            SharedWrongOutput wrongOutput) {
+            SharedWrongOutput answerGroup) {
+        // Alphabetical order, so (a, b) and (b, a) give the same pair key
         if (firstUsername.compareTo(secondUsername) > 0) {
             String temp = firstUsername;
             firstUsername = secondUsername;
             secondUsername = temp;
         }
 
-        String key = firstUsername + "|" + secondUsername;
+        String pairKey = firstUsername + "|" + secondUsername;
 
-        if (!pairs.containsKey(key)) {
-            pairs.put(key, new SharedWrongOutputPair(firstUsername, secondUsername));
+        if (!pairs.containsKey(pairKey)) {
+            pairs.put(pairKey, new SharedWrongOutputPair(firstUsername,
+                    secondUsername));
         }
 
-        pairs.get(key).addSharedWrongOutput(wrongOutput);
+        pairs.get(pairKey).addSharedWrongOutput(answerGroup);
     }
 
     // e.g. { "Q1b", "1", "6,-1" } -> "Q1b,1,6,-1"
-    private static String toKey(String[] wrongOutput) {
-        return wrongOutput[0] + "," + wrongOutput[1] + "," + wrongOutput[2];
+    private static String toAnswerKey(String[] answer) {
+        return answer[0] + "," + answer[1] + "," + answer[2];
     }
 
     // Returns the sub-folders, skipping the template copy
