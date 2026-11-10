@@ -261,7 +261,8 @@ public class GradingCtrl {
         } else {
             File extractFolder = extractFolderOf(zipFile);
             ArrayList<String> fixes = SubmissionFixer.repairSubmission(
-                    zipFile.getPath(), extractFolder.getPath(), found);
+                    zipFile.getPath(), extractFolder.getPath(), modelFolder,
+                    found);
 
             if (fixes.isEmpty()) {
                 report.add("Nothing could be fixed automatically.");

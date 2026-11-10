@@ -1,6 +1,5 @@
 package fixer;
 
-import app.GradingCtrl;
 import exceptions.AdditionalFileException;
 import exceptions.FolderNameException;
 import exceptions.MissingEmailException;
@@ -27,7 +26,8 @@ public class SubmissionFixer {
     private static final String[] QUESTIONS = { "Q1", "Q2", "Q3" };
 
     public static ArrayList<String> repairSubmission(String zipFilePath,
-            String extractedDirectory, ArrayList<Exception> foundProblems) {
+            String extractedDirectory, String modelFolder,
+            ArrayList<Exception> foundProblems) {
         ArrayList<String> messages = new ArrayList<>();
 
         String username = UsernameResolver.getUsername(zipFilePath);
@@ -49,7 +49,7 @@ public class SubmissionFixer {
         if (hasProblem(foundProblems, AdditionalFileException.class)) {
             JunkFileCleaner.junkCleaner(root, messages, fixProblems);
             JunkFileCleaner.extraFileCleaner(usernameFolder,
-                    new File(GradingCtrl.getModelFolder()), messages);
+                    new File(modelFolder), messages);
         }
 
         // 2. Pull Q1/Q2/Q3 out of any extra folders, e.g.
