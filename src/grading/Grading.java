@@ -43,7 +43,6 @@ public class Grading {
             while (sc.hasNext()) {
                 String partDataRaw = sc.nextLine();
                 String[] partData = partDataRaw.split("(?<!\\[[^\\]]+),");
-                System.out.print(partDataRaw);
                 if (partData.length == 6) {
                     studentResult.addCaseResult(partData[0], partData[1], Double.parseDouble(partData[5]), (Boolean.parseBoolean(partData[4]) ? CaseResultStatus.PASSED : (partData[3].equals("(Runtime Error)") ? CaseResultStatus.RUNTIME_ERROR : CaseResultStatus.FAILED)), "");
                 }
@@ -359,6 +358,5 @@ public class Grading {
         File questionFolder = new File("src\\unzippedFolder\\2023-2024-fen.lai.2022.zip\\RenameToYourStudentID");
         String testerFolder = "Project sample/TesterFiles";
         int timeLimitSeconds = 5;
-        System.out.println(Grading.gradePaper(student, questionFolder, testerFolder, timeLimitSeconds));
     }
 }
