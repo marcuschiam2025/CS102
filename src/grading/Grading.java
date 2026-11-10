@@ -33,6 +33,7 @@ public class Grading {
             e.printStackTrace();
         }
 
+        System.out.println(output);
         return output;
     }
 
@@ -41,6 +42,7 @@ public class Grading {
             while (sc.hasNext()) {
                 String partDataRaw = sc.nextLine();
                 String[] partData = partDataRaw.split("(?<!\\[[^\\]]+),");
+                System.out.print(partDataRaw);
                 if (partData.length == 6) {
                     studentResult.addCaseResult(partData[0], partData[1], Double.parseDouble(partData[5]), (Boolean.parseBoolean(partData[4]) ? CaseResultStatus.PASSED : (partData[3].equals("(Runtime Error)") ? CaseResultStatus.RUNTIME_ERROR : CaseResultStatus.FAILED)), "");
                 }
