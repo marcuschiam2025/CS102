@@ -99,6 +99,7 @@ public class Grading {
                 ArrayList<String> commands = new ArrayList<>();
                 commands.add("java");
                 commands.add("-cp");
+                // File.pathSeparator co-authored with Claude
                 commands.add("src" + File.pathSeparator + testerFile.getParent());
                 commands.add(testerFile + "");
 
@@ -194,6 +195,7 @@ public class Grading {
 
         String classPath = "";
         for (File questionFolder : Arrays.asList(questionFolders.listFiles())) {
+            // File.pathSeparator co-authored with Claude
             classPath += File.pathSeparator + questionFolder;
         }
 
