@@ -35,7 +35,6 @@ public class Grading {
             e.printStackTrace();
         }
 
-        System.out.println(output);
         return output;
     }
 
