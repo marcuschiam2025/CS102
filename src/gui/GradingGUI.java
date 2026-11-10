@@ -48,6 +48,12 @@ public class GradingGUI {
     private boolean checkDone = false;
     private boolean fixDone = false;
 
+    // Once the user starts step by step (step 1), the "Run all" buttons
+    // are locked so the two ways of grading are not mixed
+    private JButton runAllButton;
+    private JButton runAllOnOneButton;
+    private boolean stepByStep = false;
+
     private SettingGUI settings;
 
     // One grading step run on one submission, e.g. ctrl::checkSubmission.
@@ -65,7 +71,7 @@ public class GradingGUI {
 
             frame = new JFrame("Auto Grading System");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(900, 600);
+            frame.setSize(1400, 600);
             frame.setLocationRelativeTo(null);
             frame.setResizable(false);
             frame.getContentPane().setBackground(GuiStyle.BACKGROUND);
@@ -118,15 +124,17 @@ public class GradingGUI {
                 () -> fixAllSubmissions());
         gradeButton = addButton(buttonList, "3. Grade submissions",
                 () -> gradeAllSubmissions());
-        updateStepButtons();
 
         // Results
         addButton(buttonList, "View results", () -> viewResults());
         addButton(buttonList, "Export CSV", () -> exportResults());
 
         // Other
-        addButton(buttonList, "Run all steps", () -> runAllStepsOnAll());
-        addButton(buttonList, "Run all on one", () -> runAllStepsOnOne());
+        runAllButton = addButton(buttonList, "Run all steps",
+                () -> runAllStepsOnAll());
+        runAllOnOneButton = addButton(buttonList, "Run all on one",
+                () -> runAllStepsOnOne());
+        updateStepButtons();
         addButton(buttonList, "Settings", () -> openSettings());
         addButton(buttonList, "Check plagiarism", () -> checkPlagiarism());
 
@@ -171,6 +179,8 @@ public class GradingGUI {
     // ---------------------------- Button actions ----------------------------
 
     private void checkAllSubmissions() {
+        stepByStep = true;
+
         runInBackground(() -> {
             if (processAllSubmissions(ctrl::checkSubmission)) {
                 checkDone = true;
@@ -343,10 +353,13 @@ public class GradingGUI {
         }
     }
 
-    // Only unlock a step once the step before it has run
+    // Only unlock a step once the step before it has run, and lock the
+    // "Run all" buttons once step by step has started
     private void updateStepButtons() {
         fixButton.setEnabled(checkDone);
         gradeButton.setEnabled(fixDone);
+        runAllButton.setEnabled(!stepByStep);
+        runAllOnOneButton.setEnabled(!stepByStep);
     }
 
     // Lets the user pick one submission from a drop-down list.
