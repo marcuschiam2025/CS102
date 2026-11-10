@@ -9,7 +9,6 @@ import fileHandling.FileHandlings;
 
 import java.nio.file.*;
 
-
 import exceptions.*;
 
 public class FileStructureChecker {
@@ -76,11 +75,26 @@ public class FileStructureChecker {
                         .findFirst()
                         .orElse(null);
             }
+            // If no root folder is found, add an exception and return
+            if (root == null) {
+                exceptions.add(new FileStructureException(
+                        "No root folder found in student submission."));
+                return exceptions;
+            }
 
             if (FolderNameChecker.isValidFolderName(root.toString())) {
 
                 // if folder name is correct, check the structure
-                Path expectedRoot = Paths.get("correctStructure/RenameToYourUsername");
+
+                // Get the expected root from the correctStructure folder (e.g. "RenameToYourUsername")
+                Path expectedRoot;
+                try (Stream<Path> paths = Files.list(Paths.get("correctStructure"))) {
+                    expectedRoot = paths
+                            .filter(Files::isDirectory)
+                            .findFirst()
+                            .orElse(null);
+                }
+
                 Path studentRoot = root;
                 Set<String> expectedStructure = FileStructureChecker.getStructure(expectedRoot);
                 Set<String> studentStructure = FileStructureChecker.getStructure(studentRoot);
@@ -119,7 +133,13 @@ public class FileStructureChecker {
             } else {
                 exceptions.add(new FolderNameException("Folder name is incorrect"));
 
-                Path expectedRoot = Paths.get("correctStructure/RenameToYourUsername");
+                Path expectedRoot;
+                try (Stream<Path> paths = Files.list(Paths.get("correctStructure"))) {
+                    expectedRoot = paths
+                            .filter(Files::isDirectory)
+                            .findFirst()
+                            .orElse(null);
+                }
 
                 // Check whether the student root itself contains Q1, Q2, etc.
                 // or whether those folders are inside the wrongly named folder.
