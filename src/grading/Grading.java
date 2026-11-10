@@ -50,7 +50,46 @@ public class Grading {
         }
     }
 
+    // Compiles each student file (e.g. Q2a.java) on its own, so one file that
+    // does not compile (e.g. Q3.java) does not stop the others from compiling
+    private static void compileStudentFiles(File[] files, int timeLimitSeconds) {
+        for (File file : files) {
+            String fileName = file.getName();
+
+            if (!fileName.endsWith(".java") || fileName.endsWith("Tester.java")) {
+                continue;
+            }
+
+            ArrayList<String> commands = new ArrayList<>();
+            commands.add("javac");
+            commands.add("-cp");
+            commands.add("src" + File.pathSeparator + file.getParent());
+            commands.add("-d");
+            commands.add(file.getParent());
+            commands.add(file.getPath());
+
+            ProcessBuilder compilePb = new ProcessBuilder(commands);
+            compilePb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            compilePb.redirectError(ProcessBuilder.Redirect.DISCARD);
+
+            try {
+                Process process = compilePb.start();
+                if (!process.waitFor(timeLimitSeconds, TimeUnit.SECONDS)) {
+                    process.destroyForcibly();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private static void runTesterFiles(File[] testerFiles, File questionFolder, int timeLimitSeconds, StudentResult studentResult) {
+        // the testers below are run as source files, which does not compile the
+        // student's code, so compile it first
+        compileStudentFiles(testerFiles, timeLimitSeconds);
+
         for (File testerFile : testerFiles) {
             if (testerFile.getName().endsWith("Tester.java")) {
                 ProcessBuilder questionPb = new ProcessBuilder();
@@ -261,7 +300,7 @@ public class Grading {
         }
         
         for (String questionId : questionAndCaseIds.keySet()) {
-            new File(questionFolder + "\\" + questionId.replaceAll("(?<=Q\\d+).+", "") + "\\" + questionId + ".class").delete();
+            new File(questionFolder + "/" + questionId.replaceAll("(?<=Q\\d+).+", "") + "/" + questionId + ".class").delete();
         }
 
         outputFile.delete();
