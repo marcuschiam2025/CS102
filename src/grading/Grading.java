@@ -32,7 +32,6 @@ public class Grading {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        System.out.println(output);
 
         return output;
     }
@@ -42,7 +41,6 @@ public class Grading {
             while (sc.hasNext()) {
                 String partDataRaw = sc.nextLine();
                 String[] partData = partDataRaw.split("(?<!\\[[^\\]]+),");
-                System.out.println(partDataRaw);
                 if (partData.length == 6) {
                     studentResult.addCaseResult(partData[0], partData[1], Double.parseDouble(partData[5]), (Boolean.parseBoolean(partData[4]) ? CaseResultStatus.PASSED : (partData[3].equals("(Runtime Error)") ? CaseResultStatus.RUNTIME_ERROR : CaseResultStatus.FAILED)), "");
                 }
@@ -52,46 +50,7 @@ public class Grading {
         }
     }
 
-    // Compiles each student file (e.g. Q2a.java) on its own, so one file that
-    // does not compile (e.g. Q3.java) does not stop the others from compiling
-    private static void compileStudentFiles(File[] files, int timeLimitSeconds) {
-        for (File file : files) {
-            String fileName = file.getName();
-
-            if (!fileName.endsWith(".java") || fileName.endsWith("Tester.java")) {
-                continue;
-            }
-
-            ArrayList<String> commands = new ArrayList<>();
-            commands.add("javac");
-            commands.add("-cp");
-            commands.add("src;" + file.getParent());
-            commands.add("-d");
-            commands.add(file.getParent());
-            commands.add(file.getPath());
-
-            ProcessBuilder compilePb = new ProcessBuilder(commands);
-            compilePb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
-            compilePb.redirectError(ProcessBuilder.Redirect.DISCARD);
-
-            try {
-                Process process = compilePb.start();
-                if (!process.waitFor(timeLimitSeconds, TimeUnit.SECONDS)) {
-                    process.destroyForcibly();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     private static void runTesterFiles(File[] testerFiles, File questionFolder, int timeLimitSeconds, StudentResult studentResult) {
-        // the testers below are run as source files, which does not compile the
-        // student's code, so compile it first
-        compileStudentFiles(testerFiles, timeLimitSeconds);
-
         for (File testerFile : testerFiles) {
             if (testerFile.getName().endsWith("Tester.java")) {
                 ProcessBuilder questionPb = new ProcessBuilder();
@@ -101,7 +60,7 @@ public class Grading {
                 ArrayList<String> commands = new ArrayList<>();
                 commands.add("java");
                 commands.add("-cp");
-                commands.add("src;" + testerFile.getParent());
+                commands.add("src" + File.pathSeparator + testerFile.getParent());
                 commands.add(testerFile + "");
 
                 questionPb.command(commands);
@@ -196,7 +155,7 @@ public class Grading {
 
         String classPath = "";
         for (File questionFolder : Arrays.asList(questionFolders.listFiles())) {
-            classPath += ";" + questionFolder;
+            classPath += File.pathSeparator + questionFolder;
         }
 
         commands.add("javac");
