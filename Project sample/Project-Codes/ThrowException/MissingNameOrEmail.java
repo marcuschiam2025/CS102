@@ -10,9 +10,6 @@ import OwnExceptions.MissingNameException;
 import ThrowException.StructureChecker;
 import fileHandling.fileHandlings;
 
-public class MissingNameOrEmail {
-    public static ArrayList<Exception> catchMissingNames(String filePath)
-            throws MissingNameException, MissingEmailException {
 
 public class MissingNameOrEmail{
     public static ArrayList<Exception> catchMissingNames(String filePath) throws MissingNameException, MissingEmailException {
@@ -36,8 +33,7 @@ public class MissingNameOrEmail{
                                 String name = stringsOfRows.get(i);
                                 if (name.length() <= 15) {
                                     System.out.println(path + " has no email");
-                                    arrayOfExceptions.add(
-                                            new MissingEmailException(name + " does not have email inside the file"));
+                                    arrayOfExceptions.add(new MissingEmailException(name + " does not have email inside the file"));
                                 }
                             }
                         }
@@ -46,6 +42,5 @@ public class MissingNameOrEmail{
             e.printStackTrace();
         }
         return arrayOfExceptions;
-
     }
 }

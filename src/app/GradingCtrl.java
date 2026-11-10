@@ -52,6 +52,8 @@ public class GradingCtrl {
     private String submissionsFolder = "src/student-submission";
     private String testerFolder = "Project sample/TesterFiles";
     private String scoreSheetFile = "Project sample/IS442-ScoreSheet.csv";
+    private String studentResultTemplateFile =
+            "Project sample/StudentResultTemplate.csv";
     private int timeLimitSeconds = DEFAULT_TIME_LIMIT;
 
     private ArrayList<StudentResult> studentResults = new ArrayList<>();
@@ -59,7 +61,8 @@ public class GradingCtrl {
     // What each step has done so far, by ZIP file path:
     // problems found by the last check (or left after fixing),
     // and the submissions that went through the fix step
-    private HashMap<String, ArrayList<Exception>> foundProblems = new HashMap<>();
+    private HashMap<String, ArrayList<Exception>> foundProblems =
+            new HashMap<>();
     private HashSet<String> fixedSubmissions = new HashSet<>();
 
     public String getSubmissionsFolder() {
@@ -72,6 +75,10 @@ public class GradingCtrl {
 
     public String getScoreSheetFile() {
         return scoreSheetFile;
+    }
+
+    public String getStudentResultTemplateFile() {
+        return studentResultTemplateFile;
     }
 
     public int getTimeLimitSeconds() {
@@ -110,6 +117,19 @@ public class GradingCtrl {
         }
 
         scoreSheetFile = file;
+        return true;
+    }
+
+    // Returns false (and keeps the old file) if it is not an existing
+    // .csv file
+    public boolean setStudentResultTemplateFile(String file) {
+        boolean isCsvFile = file.toLowerCase().endsWith(CSV_EXTENSION);
+
+        if (file.isEmpty() || !isCsvFile || !new File(file).isFile()) {
+            return false;
+        }
+
+        studentResultTemplateFile = file;
         return true;
     }
 
@@ -240,7 +260,7 @@ public class GradingCtrl {
         return report;
     }
 
-    // Step 3. Grade (Phoenix): runs the testers on the fixed submission.
+    // Step 3. Grade (Cedric): runs the testers on the fixed submission.
     // If there is still no username folder, every question gets 0.
     public ArrayList<String> gradeSubmission(File zipFile) {
         ArrayList<String> report = new ArrayList<>();
@@ -283,6 +303,26 @@ public class GradingCtrl {
 
     private boolean isChecked(File zipFile) {
         return foundProblems.containsKey(zipFile.getPath());
+    }
+
+     public static File[] getJavaFiles(File directory) {
+        ArrayList<File> javaFiles = new ArrayList<>();
+        File[] files = directory.listFiles();
+
+        if (files == null) {
+            return new File[0];
+        }
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                javaFiles.addAll(
+                        Arrays.asList(getJavaFiles(file)));
+            } else if (file.getName().endsWith(".java")) {
+                javaFiles.add(file);
+            }
+        }
+
+        return javaFiles.toArray(new File[0]);
     }
 
     // e.g. unzippedFolder/2023-2024-ping.lee.2023
@@ -353,7 +393,7 @@ public class GradingCtrl {
     // left by grading, so grade first. Highest score first.
     public ArrayList<SharedWrongOutputPair> findSharedWrongOutputs()
             throws IOException {
-        StudentResult.loadQuestionResultTemplate();
+        StudentResult.loadStudentResultTemplate();
 
         return WrongOutputChecker.findSharedWrongOutputPairs(new File(UNZIP_FOLDER),
                 new File(EXAM_TEMPLATE_FOLDER), testerFolder,

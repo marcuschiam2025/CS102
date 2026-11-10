@@ -15,6 +15,11 @@ public class GradingResultsViewer {
     private static final String COLUMN = "%-8s";
     private static final String NAME_COLUMN = "%-16s";
     private static final String USERNAME_COLUMN = "%-17s";
+    // Same columns as the score sheet the school gives
+    private static final String CSV_HEADER = "OrgDefinedId,Username,"
+            + "Last Name,First Name,Email,"
+            + "Calculated Final Grade Numerator,"
+            + "Calculated Final Grade Denominator,End-of-Line Indicator";
 
     // Prints one row per student (sorted by username) with the score for
     // each question and the total, e.g.
@@ -57,7 +62,8 @@ public class GradingResultsViewer {
 
         for (StudentResult studentResult : sorted) {
             Student student = studentResult.getStudent();
-            HashMap<String, QuestionResult> questionResults = studentResult.getQuestionResults();
+            HashMap<String, QuestionResult> questionResults =
+                    studentResult.getQuestionResults();
             StringBuilder row = new StringBuilder();
 
             row.append(String.format(USERNAME_COLUMN, student.getUsername()));
@@ -89,21 +95,28 @@ public class GradingResultsViewer {
     }
 
     // Returns true if the file was written, false if it could not be
-    public static boolean exportCSV(ArrayList<StudentResult> studentResults, String scoreSheetFile) {
-        try (PrintStream ps = new PrintStream(new File(scoreSheetFile))) {
-            ps.println("OrgDefinedId,Username,Last Name,First Name,Email,Calculated Final Grade Numerator,Calculated Final Grade Denominator,End-of-Line Indicator");
+    public static boolean exportCSV(ArrayList<StudentResult> studentResults,
+            String scoreSheetFile) {
+        try (PrintStream csvWriter =
+                new PrintStream(new File(scoreSheetFile))) {
+            csvWriter.println(CSV_HEADER);
 
             for (StudentResult studentResult : studentResults) {
                 Student student = studentResult.getStudent();
 
-                ps.println("#" + student.getOrgDefinedId() + ",#" + student.getUsername() +
-                    "," + student.getLastName() + "," + student.getFirstName() + "," + student.getEmail() +
-                    "," + studentResult.getTotalScore() + "," + studentResult.getMaxTotalScore() + ",#");
+                csvWriter.println("#" + student.getOrgDefinedId()
+                        + ",#" + student.getUsername().trim()
+                        + "," + student.getLastName().trim()
+                        + "," + student.getFirstName().trim()
+                        + "," + student.getEmail().trim()
+                        + "," + studentResult.getTotalScore()
+                        + "," + studentResult.getMaxTotalScore()
+                        + ",#");
             }
 
             // PrintStream does not throw on write errors, so ask it
-            return !ps.checkError();
-        } catch (FileNotFoundException e) {
+            return !csvWriter.checkError();
+        } catch (FileNotFoundException exception) {
             // e.g. the file is open in Excel, or the folder is read-only
             return false;
         }

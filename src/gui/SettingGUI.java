@@ -23,6 +23,7 @@ public class SettingGUI {
     private JTextField submissionsField;
     private JTextField testerField;
     private JTextField scoreSheetField;
+    private JTextField studentResultTemplateField;
     private JTextField timeLimitField;
     private JLabel settingsMessage;
 
@@ -35,6 +36,7 @@ public class SettingGUI {
         submissionsField.setText(ctrl.getSubmissionsFolder());
         testerField.setText(ctrl.getTesterFolder());
         scoreSheetField.setText(ctrl.getScoreSheetFile());
+        studentResultTemplateField.setText(ctrl.getStudentResultTemplateFile());
         timeLimitField.setText("" + ctrl.getTimeLimitSeconds());
         settingsMessage.setText(" ");
     }
@@ -43,32 +45,44 @@ public class SettingGUI {
 
         JPanel page = new JPanel(new BorderLayout(GuiStyle.GAP, GuiStyle.GAP));
         page.setBackground(GuiStyle.BACKGROUND);
-        page.setBorder(BorderFactory.createEmptyBorder(GuiStyle.GAP, GuiStyle.GAP, GuiStyle.GAP, GuiStyle.GAP));
+        page.setBorder(BorderFactory.createEmptyBorder(GuiStyle.GAP,
+                GuiStyle.GAP, GuiStyle.GAP, GuiStyle.GAP));
 
         page.add(GuiStyle.createTitle("Settings"), BorderLayout.NORTH);
 
         // GridLayout(0, 1) stacks the rows; each row is its own panel.
-        JPanel form = new JPanel(new GridLayout(0, 1, GuiStyle.GAP, GuiStyle.GAP));
+        JPanel form =
+                new JPanel(new GridLayout(0, 1, GuiStyle.GAP, GuiStyle.GAP));
         form.setBackground(GuiStyle.BACKGROUND);
 
         submissionsField = new JTextField();
         testerField = new JTextField();
         scoreSheetField = new JTextField();
+        studentResultTemplateField = new JTextField();
         timeLimitField = new JTextField();
 
         // Option 1: submission folder path
         form.add(createRow("Submissions folder", submissionsField,
-                GuiStyle.createButton("Browse...", () -> chooseFolder(submissionsField))));
+                GuiStyle.createButton("Browse...",
+                        () -> chooseFolder(submissionsField))));
 
         // Option 2: tester folder path
         form.add(createRow("Tester files folder", testerField,
-                GuiStyle.createButton("Browse...", () -> chooseFolder(testerField))));
+                GuiStyle.createButton("Browse...",
+                        () -> chooseFolder(testerField))));
 
-        // Option 3: pick a .csv file
+        // Option 3: pick a .csv file for score sheet
         form.add(createRow("Score sheet (CSV)", scoreSheetField,
-                GuiStyle.createButton("Browse...", () -> chooseCsvFile(scoreSheetField))));
+                GuiStyle.createButton("Browse...",
+                        () -> chooseCsvFile(scoreSheetField))));
 
-        // Option 4: timeLimit field
+        // Option 4: pick a .csv file for student result template
+        form.add(createRow("Student Result Template (CSV)",
+                studentResultTemplateField,
+                GuiStyle.createButton("Browse...",
+                        () -> chooseCsvFile(studentResultTemplateField))));
+
+        // Option 5: timeLimit field
         form.add(createRow("Time limit in seconds ("
                 + GradingCtrl.MIN_TIME_LIMIT + "-"
                 + GradingCtrl.MAX_TIME_LIMIT + ")", timeLimitField, null));
@@ -100,7 +114,8 @@ public class SettingGUI {
 
     // One row: [label] [text field..............] [Browse...]
     // browseButton can be null for rows that do not need one
-    private JPanel createRow(String labelText, JTextField field, JButton browseButton) {
+    private JPanel createRow(String labelText, JTextField field,
+            JButton browseButton) {
         JPanel row = new JPanel(new BorderLayout(GuiStyle.GAP, 0));
         row.setBackground(GuiStyle.BACKGROUND);
 
@@ -163,6 +178,11 @@ public class SettingGUI {
             errors.add("score sheet is not an existing .csv file");
         }
 
+        String templateFile = studentResultTemplateField.getText().trim();
+        if (!ctrl.setStudentResultTemplateFile(templateFile)) {
+            errors.add("student result template is not an existing .csv file");
+        }
+
         // The time limit is typed as text, so turn it into a number first.
         // parseInt throws NumberFormatException for things like "abc".
         try {
@@ -183,7 +203,8 @@ public class SettingGUI {
         } else {
             settingsMessage.setForeground(GuiStyle.ERROR);
             // The valid settings were still saved; only these were not
-            settingsMessage.setText("Not changed: " + String.join(", ", errors));
+            settingsMessage.setText("Not changed: "
+                    + String.join(", ", errors));
         }
     }
 

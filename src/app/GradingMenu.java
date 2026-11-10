@@ -149,13 +149,13 @@ public class GradingMenu {
     // ---------- Main menu actions ----------
 
     private void gradeAllSubmissions() {
-        StudentResult.loadQuestionResultTemplate();
+        StudentResult.loadStudentResultTemplate();
         System.out.println("\n" + GRADING_NOTE);
         processAllSubmissions(ctrl::gradeSubmission);
     }
 
     private void runAllStepsOnAll() {
-        StudentResult.loadQuestionResultTemplate();
+        StudentResult.loadStudentResultTemplate();
         System.out.println("\n" + GRADING_NOTE);
         processAllSubmissions(ctrl::processSubmission);
     }
@@ -167,7 +167,7 @@ public class GradingMenu {
             return;
         }
 
-        StudentResult.loadQuestionResultTemplate();
+        StudentResult.loadStudentResultTemplate();
         System.out.println("\n" + GRADING_NOTE);
         System.out.println("\n" + zipFile.getName());
 
