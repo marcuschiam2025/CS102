@@ -1,5 +1,6 @@
 package fixer;
 
+import app.GradingCtrl;
 import exceptions.AdditionalFileException;
 import exceptions.FolderNameException;
 import exceptions.MissingEmailException;
@@ -80,6 +81,12 @@ public class SubmissionFixer {
                 HeaderFixer.headerFix(usernameFolder, username, studentName,
                         messages, fixProblems);
             }
+        }
+
+        if (usernameFolder.isDirectory()
+                && hasProblem(foundProblems, AdditionalFileException.class)) {
+            JunkFileCleaner.extraFileCleaner(usernameFolder,
+                    new File(GradingCtrl.getModelFolder()), messages);
         }
 
         for (Exception problem : fixProblems) {

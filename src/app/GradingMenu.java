@@ -32,6 +32,7 @@ public class GradingMenu {
     private static final int SET_TESTER_FOLDER = 2;
     private static final int SET_SCORE_SHEET = 3;
     private static final int SET_TIME_LIMIT = 4;
+    private static final int SET_MODEL_FOLDER = 5;
     private static final int BACK = 5;
 
     private static final String GRADING_NOTE = "Grading each test case "
@@ -181,7 +182,7 @@ public class GradingMenu {
         // is merged
         ctrl.viewResults();
         // System.out.println("\nNot available yet: results will be shown "
-        //         + "here once grading is added.");
+        // + "here once grading is added.");
     }
 
     private void exportResults() {
@@ -211,11 +212,38 @@ public class GradingMenu {
                     + exception.getMessage());
         }
 
+<<<<<<< Updated upstream
         // 2. Another student's username in a file. It reads the zips
         //    itself, so it still runs if check 1 failed.
         ArrayList<ForeignHeader> foreignHeaders = ctrl.findForeignHeaders();
         System.out.print("\n"
                 + PlagiarismReport.formatForeignHeaders(foreignHeaders));
+=======
+        if (pairs.isEmpty()) {
+            System.out.println("No two students share an unusual wrong "
+                    + "answer.");
+            return;
+        }
+
+        System.out.println("These pairs gave the same wrong answers. A "
+                + "higher score means more, or rarer, shared answers.");
+        System.out.println("This is a reason to look closer, not proof.");
+
+        for (int i = 0; i < pairs.size(); i++) {
+            SuspiciousPair pair = pairs.get(i);
+            System.out.printf("%n%d. %s & %s (score %.2f)%n", i + 1,
+                    pair.getFirstUsername(), pair.getSecondUsername(),
+                    pair.getScore());
+
+            for (SharedWrongOutput wrongOutput : pair.getSharedWrongOutputs()) {
+                System.out.println("   " + wrongOutput.getQuestionId()
+                        + " case " + wrongOutput.getCaseId()
+                        + ": expected,actual = " + wrongOutput.getOutput()
+                        + " (" + wrongOutput.getUsernames().size()
+                        + " students gave this)");
+            }
+        }
+>>>>>>> Stashed changes
     }
 
     private void processAllSubmissions(Step step) {
@@ -328,7 +356,11 @@ public class GradingMenu {
                         "Not an existing .csv file");
             } else if (choice == SET_TIME_LIMIT) {
                 changeTimeLimit();
-            }
+            } else if (choice == SET_SCORE_SHEET) {
+                String file = readText("Enter the new model folder path "
+                        + "(leave empty to cancel): ");
+                showResult(file, ctrl.setModelFolder(file),
+                        "Not an existing folder");
         }
     }
 
@@ -342,6 +374,8 @@ public class GradingMenu {
                 + ctrl.getScoreSheetFile());
         System.out.println(SET_TIME_LIMIT + ". Time limit per program: "
                 + ctrl.getTimeLimitSeconds() + " seconds");
+        System.out.println(SET_MODEL_FOLDER + ". model folder for folder cleaning: "
+                + ctrl.getModelFolder());
         System.out.println(BACK + ". Back to main menu");
     }
 
