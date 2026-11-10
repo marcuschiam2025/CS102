@@ -48,6 +48,8 @@ public class SubmissionFixer {
         //    for the student's folder
         if (hasProblem(foundProblems, AdditionalFileException.class)) {
             JunkFileCleaner.junkCleaner(root, messages, fixProblems);
+            JunkFileCleaner.extraFileCleaner(usernameFolder,
+                    new File(GradingCtrl.getModelFolder()), messages);
         }
 
         // 2. Pull Q1/Q2/Q3 out of any extra folders, e.g.
@@ -83,11 +85,6 @@ public class SubmissionFixer {
             }
         }
 
-        if (usernameFolder.isDirectory()
-                && hasProblem(foundProblems, AdditionalFileException.class)) {
-            JunkFileCleaner.extraFileCleaner(usernameFolder,
-                    new File(GradingCtrl.getModelFolder()), messages);
-        }
 
         for (Exception problem : fixProblems) {
             messages.add("Could not fix: " + problem.getMessage());
