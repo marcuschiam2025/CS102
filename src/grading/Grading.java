@@ -8,6 +8,8 @@ import model.StudentResult;
 import model.Student;
 import model.CaseResultStatus;
 
+// Co-authored with Claude
+
 public class Grading {
     public static File errorFile = new File("error.txt");
     public static File outputFile = new File("output.txt");
@@ -33,6 +35,7 @@ public class Grading {
             e.printStackTrace();
         }
 
+        System.out.println(output);
         return output;
     }
 
@@ -41,6 +44,7 @@ public class Grading {
             while (sc.hasNext()) {
                 String partDataRaw = sc.nextLine();
                 String[] partData = partDataRaw.split("(?<!\\[[^\\]]+),");
+                System.out.print(partDataRaw);
                 if (partData.length == 6) {
                     studentResult.addCaseResult(partData[0], partData[1], Double.parseDouble(partData[5]), (Boolean.parseBoolean(partData[4]) ? CaseResultStatus.PASSED : (partData[3].equals("(Runtime Error)") ? CaseResultStatus.RUNTIME_ERROR : CaseResultStatus.FAILED)), "");
                 }
@@ -50,6 +54,7 @@ public class Grading {
         }
     }
 
+    // This function is co-authored with Claude
     // Compiles each student file (e.g. Q2a.java) on its own, so one file that
     // does not compile (e.g. Q3.java) does not stop the others from compiling
     private static void compileStudentFiles(File[] files, int timeLimitSeconds) {
@@ -63,7 +68,7 @@ public class Grading {
             ArrayList<String> commands = new ArrayList<>();
             commands.add("javac");
             commands.add("-cp");
-            commands.add("src" + File.pathSeparator + file.getParent());
+            commands.add("classes" + File.pathSeparator + file.getParent());
             commands.add("-d");
             commands.add(file.getParent());
             commands.add(file.getPath());
@@ -110,6 +115,7 @@ public class Grading {
     private static void runTesterFiles(File[] testerFiles, File questionFolder, int timeLimitSeconds, StudentResult studentResult) {
         // the testers below are run as source files, which does not compile the
         // student's code, so compile it first
+        // This line is co-authored with Claude
         compileStudentFiles(testerFiles, timeLimitSeconds);
 
         for (File testerFile : testerFiles) {
@@ -122,7 +128,7 @@ public class Grading {
                 commands.add("java");
                 commands.add("-cp");
                 // File.pathSeparator co-authored with Claude
-                commands.add("src" + File.pathSeparator + testerFile.getParent());
+                commands.add("classes" + File.pathSeparator + testerFile.getParent());
                 commands.add(testerFile + "");
 
                 questionPb.command(commands);
@@ -137,6 +143,7 @@ public class Grading {
                     // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
                     success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
 
+                    // This if block is co-authored with Claude
                     if (!success) {
                         // Still running after the time limit, so stop it
                         process.destroyForcibly();
@@ -226,7 +233,7 @@ public class Grading {
 
         commands.add("javac");
         commands.add("-cp");
-        commands.add("src" + classPath);
+        commands.add("classes" + classPath);
         commands.add(questionFolders + "/QuestionTester.java");
 
         questionPb.command(commands);
@@ -252,7 +259,7 @@ public class Grading {
 
         commands.add("java");
         commands.add("-cp");
-        commands.add("src" + classPath);
+        commands.add("classes" + classPath);
         commands.add(questionFolders + "/QuestionTester.java");
 
         questionPb.command(commands);
@@ -267,6 +274,7 @@ public class Grading {
             // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
             success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
 
+            // This if block is co-authored with Claude
             if (!success) {
                 // Still running after the time limit, so stop it
                 process.destroyForcibly();
@@ -346,7 +354,7 @@ public class Grading {
     }
 
     public static void main(String[] args) {
-        StudentResult.loadStudentResultTemplate();
+        StudentResult.loadStudentResultTemplate("Project sample/StudentResultTemplate.csv");
         Student student = new Student("a", "a", "a", "a", "a");
         // make sure it traverses until it reaches Q1/Q2/Q3 etc.
         File questionFolder = new File("src\\unzippedFolder\\2023-2024-fen.lai.2022.zip\\RenameToYourStudentID");

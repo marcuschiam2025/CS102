@@ -24,7 +24,6 @@ public class SettingGUI {
     private JTextField testerField;
     private JTextField scoreSheetField;
     private JTextField studentResultTemplateField;
-    private JTextField timeLimitField;
     private JLabel settingsMessage;
 
     public SettingGUI(GradingCtrl ctrl, Runnable onBack) {
@@ -37,7 +36,6 @@ public class SettingGUI {
         testerField.setText(ctrl.getTesterFolder());
         scoreSheetField.setText(ctrl.getScoreSheetFile());
         studentResultTemplateField.setText(ctrl.getStudentResultTemplateFile());
-        timeLimitField.setText("" + ctrl.getTimeLimitSeconds());
         settingsMessage.setText(" ");
     }
 
@@ -59,7 +57,6 @@ public class SettingGUI {
         testerField = new JTextField();
         scoreSheetField = new JTextField();
         studentResultTemplateField = new JTextField();
-        timeLimitField = new JTextField();
 
         // Option 1: submission folder path
         form.add(createRow("Submissions folder", submissionsField,
@@ -81,11 +78,6 @@ public class SettingGUI {
                 studentResultTemplateField,
                 GuiStyle.createButton("Browse...",
                         () -> chooseCsvFile(studentResultTemplateField))));
-
-        // Option 5: timeLimit field
-        form.add(createRow("Time limit in seconds ("
-                + GradingCtrl.MIN_TIME_LIMIT + "-"
-                + GradingCtrl.MAX_TIME_LIMIT + ")", timeLimitField, null));
 
         // Keep the rows at their normal height (same trick as the sidebar)
         JPanel formHolder = new JPanel(new BorderLayout());
@@ -181,20 +173,6 @@ public class SettingGUI {
         String templateFile = studentResultTemplateField.getText().trim();
         if (!ctrl.setStudentResultTemplateFile(templateFile)) {
             errors.add("student result template is not an existing .csv file");
-        }
-
-        // The time limit is typed as text, so turn it into a number first.
-        // parseInt throws NumberFormatException for things like "abc".
-        try {
-            int seconds = Integer.parseInt(timeLimitField.getText().trim());
-
-            if (!ctrl.setTimeLimitSeconds(seconds)) {
-                errors.add("time limit must be from "
-                        + GradingCtrl.MIN_TIME_LIMIT + " to "
-                        + GradingCtrl.MAX_TIME_LIMIT);
-            }
-        } catch (NumberFormatException exception) {
-            errors.add("time limit must be a whole number");
         }
 
         if (errors.isEmpty()) {

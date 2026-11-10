@@ -7,8 +7,6 @@ import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-import app.GradingCtrl;
-
 // All question scores for one student, plus the total
 public class StudentResult {
     private Student student;
@@ -113,10 +111,13 @@ public class StudentResult {
         return questionIds;
     }
 
-    public static void loadStudentResultTemplate() {
-        GradingCtrl ctrl = new GradingCtrl();
+    // Reads the max score of every case from the given CSV file
+    // (the path comes from the settings in GradingCtrl)
+    public static void loadStudentResultTemplate(String templatePath) {
+        File templateFile = new File(templatePath);
 
-        File templateFile = new File(ctrl.getStudentResultTemplateFile());
+        // Forget the old template, in case a different file was chosen
+        studentResultTemplate.clear();
 
         try (Scanner sc = new Scanner(templateFile)) {
             sc.nextLine();
@@ -149,7 +150,7 @@ public class StudentResult {
 
     // main program to test the template;
     public static void main(String[] args) {
-        loadStudentResultTemplate();
+        loadStudentResultTemplate("Project sample/StudentResultTemplate.csv");
         System.out.println(studentResultTemplate);
         Student test = new Student("a", "a", "a", "a", "a");
         StudentResult testResult = new StudentResult(test);

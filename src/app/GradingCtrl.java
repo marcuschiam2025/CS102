@@ -31,10 +31,8 @@ import exceptions.InvalidZipException;
 // Does the work behind the menu and keeps the settings. It never prints
 // anything, it only returns results so the menu can decide how to show them.
 public class GradingCtrl {
-    public static final int MIN_TIME_LIMIT = 1;
-    public static final int MAX_TIME_LIMIT = 60;
-
-    private static final int DEFAULT_TIME_LIMIT = 5;
+    // Seconds each program may run during grading (fixed, not a setting)
+    private static final int TIME_LIMIT_SECONDS = 5;
     private static final String UNZIP_FOLDER = "unzippedFolder";
     private static final String TEMPLATE_ZIP = "src/RenameToYourUsername.zip";
     private static final String ZIP_EXTENSION = ".zip";
@@ -57,7 +55,6 @@ public class GradingCtrl {
     private String studentResultTemplateFile =
             "Project sample/StudentResultTemplate.csv";
     private String modelFolder = "Project sample/RenameToYourUsername";
-    private int timeLimitSeconds = DEFAULT_TIME_LIMIT;
 
     private ArrayList<StudentResult> studentResults = new ArrayList<>();
 
@@ -84,12 +81,9 @@ public class GradingCtrl {
         return studentResultTemplateFile;
     }
 
-    public int getTimeLimitSeconds() {
-        return timeLimitSeconds;
-    }
-
-    public String getModelFolder() {
-        return modelFolder;
+    // Loads the max scores from the template file chosen in the settings
+    public void loadStudentResultTemplate() {
+        StudentResult.loadStudentResultTemplate(studentResultTemplateFile);
     }
 
     // Returns false (and keeps the old folder) if the input is empty
@@ -137,25 +131,6 @@ public class GradingCtrl {
         }
 
         studentResultTemplateFile = file;
-        return true;
-    }
-
-    // Returns false (and keeps the old time limit) if it is out of range
-    public boolean setTimeLimitSeconds(int seconds) {
-        if (seconds < MIN_TIME_LIMIT || seconds > MAX_TIME_LIMIT) {
-            return false;
-        }
-
-        timeLimitSeconds = seconds;
-        return true;
-    }
-
-    public boolean setModelFolder(String folder) {
-        if (!isExistingFolder(folder)) {
-            return false;
-        }
-
-        modelFolder = folder;
         return true;
     }
 
@@ -303,7 +278,7 @@ public class GradingCtrl {
 
         if (usernameFolder.isDirectory()) {
             result = Grading.gradePaper(student, usernameFolder,
-                    testerFolder, timeLimitSeconds);
+                    testerFolder, TIME_LIMIT_SECONDS);
         } else {
             result = new StudentResult(student);
         }
@@ -319,26 +294,6 @@ public class GradingCtrl {
 
     private boolean isChecked(File zipFile) {
         return foundProblems.containsKey(zipFile.getPath());
-    }
-
-     public static File[] getJavaFiles(File directory) {
-        ArrayList<File> javaFiles = new ArrayList<>();
-        File[] files = directory.listFiles();
-
-        if (files == null) {
-            return new File[0];
-        }
-
-        for (File file : files) {
-            if (file.isDirectory()) {
-                javaFiles.addAll(
-                        Arrays.asList(getJavaFiles(file)));
-            } else if (file.getName().endsWith(".java")) {
-                javaFiles.add(file);
-            }
-        }
-
-        return javaFiles.toArray(new File[0]);
     }
 
     // e.g. unzippedFolder/2023-2024-ping.lee.2023
@@ -405,15 +360,28 @@ public class GradingCtrl {
         return EXPORT_FILE;
     }
 
+    // Deletes the files the program made while running, so nothing is left
+    // behind after it closes. Keeps output/ (the exported results) and
+    // classes/ (the compiled program, needed by run.bat).
+    public void deleteGeneratedFiles() {
+        FileHandlings.deleteFolder(new File(UNZIP_FOLDER));
+        // made by FileStructureChecker
+        FileHandlings.deleteFolder(new File("correctStructure"));
+        FileHandlings.deleteFolder(new File("studentStructure"));
+        // made by Grading
+        Grading.errorFile.delete();
+        Grading.outputFile.delete();
+    }
+
     // Pairs of students who share unusual wrong answers, using the output
     // left by grading, so grade first. Highest score first.
     public ArrayList<SharedWrongOutputPair> findSharedWrongOutputs()
             throws IOException {
-        StudentResult.loadStudentResultTemplate();
+        loadStudentResultTemplate();
 
         return WrongOutputChecker.findSharedWrongOutputPairs(new File(UNZIP_FOLDER),
                 new File(EXAM_TEMPLATE_FOLDER), testerFolder,
-                timeLimitSeconds);
+                TIME_LIMIT_SECONDS);
     }
 
     public ArrayList<ForeignHeader> findForeignHeaders() {
@@ -438,10 +406,6 @@ public class GradingCtrl {
 
         return SimilarCodeChecker.findSimilarCode(zipFiles,
                 new File(EXAM_TEMPLATE_FOLDER));
-    }
-
-    public void viewResults() {
-        GradingResultsViewer.viewResults(studentResults);
     }
 
     // The results table as text, for the GUI

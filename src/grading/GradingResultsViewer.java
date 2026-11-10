@@ -21,17 +21,10 @@ public class GradingResultsViewer {
             + "Calculated Final Grade Numerator,"
             + "Calculated Final Grade Denominator,End-of-Line Indicator";
 
-    // Prints one row per student (sorted by username) with the score for
-    // each question and the total, e.g.
+    // Builds the results table, one row per student (sorted by username)
+    // with the score for each question and the total, e.g.
     //   Username         Name            Q1a     Q1b   ...  Total
     //   ping.lee.2023    PING LEE        3/3     3/3   ...  20/20
-    public static void viewResults(ArrayList<StudentResult> studentResults) {
-        System.out.println();
-        System.out.print(formatResults(studentResults));
-    }
-
-    // Builds the same table as viewResults as one String, one line per
-    // student, so the GUI can show it too
     public static String formatResults(
             ArrayList<StudentResult> studentResults) {
         if (studentResults.isEmpty()) {
