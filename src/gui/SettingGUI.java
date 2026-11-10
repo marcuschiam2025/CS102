@@ -1,5 +1,6 @@
 package gui;
 
+import app.GradingCtrl;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -13,7 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import app.GradingCtrl;
+// Co-authored with Claude
 
 public class SettingGUI {
 

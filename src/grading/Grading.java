@@ -83,11 +83,16 @@ public class Grading {
         return resultCount;
     }
 
-    // True if the error output shows the code did not compile, e.g.
-    // "Q1a.java:5: error: ';' expected" or "error: compilation failed"
+    // javac's error formats: "Q1a.java:5: error: ';' expected" or a line
+    // starting with "error:", e.g. "error: compilation failed". An exception
+    // message such as "parse error: bad input" does not match either.
+    private static final Pattern COMPILE_ERROR_LINE = Pattern.compile(
+            "^error: .*|.*\\.java:\\d+: error: .*");
+
+    // True if the error output shows the code did not compile
     private static boolean hasCompileError(ArrayList<String> errorText) {
         for (String line : errorText) {
-            if (line.contains("error:") || line.contains("compilation failed")) {
+            if (COMPILE_ERROR_LINE.matcher(line).matches()) {
                 return true;
             }
         }
@@ -219,16 +224,10 @@ public class Grading {
     public static boolean runAllTesterFiles(HashMap<String, ArrayList<String>> questionAndCaseIds, File questionFolders, String testerFolder, int timeLimitSeconds) {
         File[] questionTesterFolders = new File(testerFolder).listFiles();
         Path questionTesterPath = FileSystems.getDefault().getPath(questionFolders.getPath(), "QuestionTester.java");
-        File questionTester = null;
-
         // what happens when a question folder is missing? give 0 points
-        try {
-            questionTester = Files.createFile(questionTesterPath).toFile();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // The PrintStream below creates this file, or overwrites one left
+        // behind by an earlier run that crashed
+        File questionTester = questionTesterPath.toFile();
 
         for (File questionTesterFolder : questionTesterFolders) {
             String questionId = questionTesterFolder.getName();
@@ -339,14 +338,6 @@ public class Grading {
     public static StudentResult gradePaper(Student student, File questionFolder, String testerFolder, int timeLimitSeconds) {
         StudentResult studentResult = new StudentResult(student);
         HashMap<String, ArrayList<String>> questionAndCaseIds = studentResult.getQuestionAndCaseIds();
-
-        ArrayList<String> questionsToCheck = new ArrayList<String>();
-
-        for (String question : questionAndCaseIds.keySet()) {
-            if (!questionsToCheck.contains(question)) {
-                questionsToCheck.add(question.replaceAll("(?<=Q\\d+).+", ""));
-            }
-        }
 
         boolean success = false;
         try {

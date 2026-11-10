@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.regex.Pattern;
 
 import java.util.zip.ZipEntry;
@@ -60,19 +61,35 @@ public class HeaderChecker {
         return javaFiles;
     }
 
-    // True if the line has the username as a whole word, ignoring case.
+    // Matches the username as a whole word, ignoring case.
     // "david.2024" is found in "Email ID: david.2024@smu.edu.sg" or at the
     // end of a sentence ("by david.2024."), but not inside "ian.david.2024".
+    private static Pattern wholeWordPattern(String username) {
+        return Pattern.compile("(?<!\\w)(?<!\\w\\.)" + Pattern.quote(username)
+                + "(?!\\w)(?!\\.\\w)", Pattern.CASE_INSENSITIVE);
+    }
+
+    // True if the line has the username as a whole word. The quick
+    // contains() check first skips the many lines that cannot match.
+    private static boolean containsUsername(String line, String username,
+            Pattern wholeWord) {
+        return line.toLowerCase().contains(username.toLowerCase())
+                && wholeWord.matcher(line).find();
+    }
+
     private static boolean containsUsername(String line, String username) {
-        String wholeWord = "(?<!\\w)(?<!\\w\\.)" + Pattern.quote(username)
-                + "(?!\\w)(?!\\.\\w)";
-        return Pattern.compile(wholeWord, Pattern.CASE_INSENSITIVE)
-                .matcher(line).find();
+        return containsUsername(line, username, wholeWordPattern(username));
     }
 
     public static ArrayList<ForeignHeader> findForeignHeaders(File[] zipFiles) {
         ArrayList<ForeignHeader> found = new ArrayList<>();
         ArrayList<String> usernames = getUsernames(zipFiles);
+
+        // Each username's pattern is made once, not once per line
+        HashMap<String, Pattern> patterns = new HashMap<>();
+        for (String username : usernames) {
+            patterns.put(username, wholeWordPattern(username));
+        }
 
         for (File zip : zipFiles) {
             String owner = UsernameResolver.getUsername(zip.getPath());
@@ -95,7 +112,7 @@ public class HeaderChecker {
                         if (other.equals(owner)) {
                             continue;
                         }
-                        if (containsUsername(line, other)) {
+                        if (containsUsername(line, other, patterns.get(other))) {
                             ForeignHeader fh = new ForeignHeader(owner, other, fileName, line.trim());
                             found.add(fh);
                         }
