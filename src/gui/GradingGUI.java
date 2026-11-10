@@ -263,8 +263,9 @@ public class GradingGUI {
         });
     }
 
-    // Runs one step (or all of them) on every submission
-    private void processAllSubmissions(Step step) {
+    // Runs one step (or all of them) on every submission.
+    // Returns false if there were no submissions to run it on.
+    private boolean processAllSubmissions(Step step) {
         // 1. Ask ctrl for the zip files
         File[] zipFiles = getZipFiles();
 

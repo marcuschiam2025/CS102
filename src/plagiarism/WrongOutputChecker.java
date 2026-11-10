@@ -25,7 +25,7 @@ import model.Student;
 // wrong in exactly the same way is unusual, so it is worth a closer look.
 //
 // It reads the tester output that grading leaves in each student's
-// folder (e.g. Q1/Q1aPart1Tester_output.txt), so grade first.
+// folder (e.g. Q1/Q1aTester_output.txt), so grade first.
 public class WrongOutputChecker {
     // Where the blank exam template is graded, inside the unzip folder
     private static final String TEMPLATE_COPY_FOLDER = "_template";
@@ -38,9 +38,11 @@ public class WrongOutputChecker {
     // Fewer students than this and there is nothing to compare
     private static final int MIN_STUDENTS = 2;
 
-    // e.g. "Q1aPart3Tester_output.txt" -> Q1a and 3
+    // Grading writes one file with every case of a question,
+    // e.g. "Q1aTester_output.txt", or, if that run failed, one file per
+    // case, e.g. "Q1aPart3Tester_output.txt". Group 1 is the question.
     private static final Pattern OUTPUT_FILE_NAME = Pattern.compile(
-            "(Q\\d+[a-z]?)Part(\\d+)" + Pattern.quote(OUTPUT_FILE_ENDING));
+            "(Q\\d+[a-z]?)(Part\\d+)?" + Pattern.quote(OUTPUT_FILE_ENDING));
 
     // Returns the pairs of students who share at least one unusual wrong
     // answer, highest score first.
@@ -48,7 +50,7 @@ public class WrongOutputChecker {
     // unzippedFolder/2023-2024-ping.lee.2023/ping.lee.2023/Q1/...
     // templateFolder is the blank exam (RenameToYourUsername).
     // The question template must be loaded first
-    // (StudentResult.loadQuestionResultTemplate).
+    // (StudentResult.loadStudentResultTemplate).
     public static ArrayList<SharedWrongOutputPair> findSharedWrongOutputPairs(
             File unzipFolder, File templateFolder, String testerFolder,
             int timeLimitSeconds) throws IOException {
@@ -179,7 +181,11 @@ public class WrongOutputChecker {
     // { questionId, caseId, "expected,actual" }
     private static ArrayList<String[]> readWrongOutputs(File usernameFolder)
             throws IOException {
-        ArrayList<String[]> wrongOutputs = new ArrayList<>();
+        // The newest result for each case, by "questionId,caseId".
+        // A folder can hold both kinds of output file (e.g. one left from
+        // an older grading run), so the newest file wins.
+        HashMap<String, String[]> results = new HashMap<>();
+        HashMap<String, Long> resultTimes = new HashMap<>();
 
         for (File questionFolder : listFolders(usernameFolder)) {
             File[] files = questionFolder.listFiles();
@@ -195,36 +201,48 @@ public class WrongOutputChecker {
                     continue;
                 }
 
-                String questionId = fileName.group(1);
-                String caseId = fileName.group(2);
-                String output = readWrongOutput(file, questionId, caseId);
+                long fileTime = file.lastModified();
 
-                if (output != null) {
-                    wrongOutputs.add(new String[] { questionId, caseId,
-                            output });
+                for (String[] result : readResults(file, fileName.group(1))) {
+                    String caseKey = result[0] + "," + result[1];
+
+                    if (!resultTimes.containsKey(caseKey)
+                            || fileTime >= resultTimes.get(caseKey)) {
+                        results.put(caseKey, result);
+                        resultTimes.put(caseKey, fileTime);
+                    }
                 }
+            }
+        }
+
+        ArrayList<String[]> wrongOutputs = new ArrayList<>();
+
+        for (String[] result : results.values()) {
+            if (result[2] != null) {
+                wrongOutputs.add(result);
             }
         }
 
         return wrongOutputs;
     }
 
-    // Returns "expected,actual" if the case scored 0, or null if it
-    // passed, timed out, crashed or threw an exception
-    private static String readWrongOutput(File outputFile,
-            String questionId, String caseId) throws IOException {
+    // Returns { questionId, caseId, "expected,actual" } for every case in
+    // the file. "expected,actual" is null if the case passed or threw an
+    // exception, so only real wrong answers are compared.
+    private static ArrayList<String[]> readResults(File outputFile,
+            String questionId) throws IOException {
         // A result line is: question,case,expected,actual,passed,marks
-        // Only lines for this exact case are read, so anything else the
+        // Only lines for this question are read, so anything else the
         // student's code printed is ignored.
         Pattern resultLine = Pattern.compile(
-                Pattern.quote(questionId + "," + caseId + ",")
-                        + "(.*),(true|false),(\\d+(\\.\\d+)?)");
+                Pattern.quote(questionId + ",")
+                        + "(\\d+),(.*),(true|false),(\\d+(\\.\\d+)?)");
 
         // ISO-8859-1 can read any bytes, so unusual characters printed by
         // the student's code cannot make reading fail
         List<String> lines = Files.readAllLines(outputFile.toPath(),
                 StandardCharsets.ISO_8859_1);
-        String output = null;
+        ArrayList<String[]> results = new ArrayList<>();
 
         for (String line : lines) {
             Matcher matcher = resultLine.matcher(line.trim());
@@ -233,17 +251,19 @@ public class WrongOutputChecker {
                 continue;
             }
 
-            double marks = Double.parseDouble(matcher.group(3));
-            String expectedAndActual = matcher.group(1);
+            String caseId = matcher.group(1);
+            String expectedAndActual = matcher.group(2);
+            double marks = Double.parseDouble(matcher.group(4));
 
             if (marks > 0 || expectedAndActual.endsWith(RUNTIME_ERROR_TEXT)) {
-                output = null;
-            } else {
-                output = expectedAndActual;
+                expectedAndActual = null;
             }
+
+            results.add(new String[] { questionId, caseId,
+                    expectedAndActual });
         }
 
-        return output;
+        return results;
     }
 
     // Grading writes a compile file (e.g. Q1a_compile.txt) for every

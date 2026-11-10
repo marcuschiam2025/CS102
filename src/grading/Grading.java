@@ -33,7 +33,7 @@ public class Grading {
     private static final String RUNTIME_ERROR_TEXT = "(Runtime Error)";
 
     // Grades every case in the question template, which must be loaded
-    // first (StudentResult.loadQuestionResultTemplate).
+    // first (StudentResult.loadStudentResultTemplate).
     // usernameFolder is the folder that holds Q1, Q2 and Q3.
     public static StudentResult gradePaper(Student student,
             File usernameFolder, String testerFolder, int timeLimitSeconds) {
