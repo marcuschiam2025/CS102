@@ -8,6 +8,8 @@ import model.StudentResult;
 import model.Student;
 import model.CaseResultStatus;
 
+// Co-authored with Claude
+
 public class Grading {
     public static File errorFile = new File("error.txt");
     public static File outputFile = new File("output.txt");
@@ -52,6 +54,7 @@ public class Grading {
         }
     }
 
+    // This function is co-authored with Claude
     // Compiles each student file (e.g. Q2a.java) on its own, so one file that
     // does not compile (e.g. Q3.java) does not stop the others from compiling
     private static void compileStudentFiles(File[] files, int timeLimitSeconds) {
@@ -90,6 +93,7 @@ public class Grading {
     private static void runTesterFiles(File[] testerFiles, File questionFolder, int timeLimitSeconds, StudentResult studentResult) {
         // the testers below are run as source files, which does not compile the
         // student's code, so compile it first
+        // This line is co-authored with Claude
         compileStudentFiles(testerFiles, timeLimitSeconds);
 
         for (File testerFile : testerFiles) {
@@ -117,6 +121,7 @@ public class Grading {
                     // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
                     success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
 
+                    // This if block is co-authored with Claude
                     if (!success) {
                         // Still running after the time limit, so stop it
                         process.destroyForcibly();
@@ -244,6 +249,7 @@ public class Grading {
             // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
             success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
 
+            // This if block is co-authored with Claude
             if (!success) {
                 // Still running after the time limit, so stop it
                 process.destroyForcibly();
