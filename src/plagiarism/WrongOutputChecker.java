@@ -49,7 +49,7 @@ public class WrongOutputChecker {
     // templateFolder is the blank exam (RenameToYourUsername).
     // The question template must be loaded first
     // (StudentResult.loadQuestionResultTemplate).
-    public static ArrayList<SuspiciousPair> findSuspiciousPairs(
+    public static ArrayList<SharedWrongOutputPair> findSharedWrongOutputPairs(
             File unzipFolder, File templateFolder, String testerFolder,
             int timeLimitSeconds) throws IOException {
         // 1. Answers the blank template gives, e.g. Q1b's "return -1;".
@@ -105,7 +105,7 @@ public class WrongOutputChecker {
         //    students is strong evidence, while one shared by 60 of them
         //    is a common mistake. Shared by everyone gives log(1) = 0.
         // 4. Add each shared answer to every pair of students who gave it
-        HashMap<String, SuspiciousPair> pairs = new HashMap<>();
+        HashMap<String, SharedWrongOutputPair> pairs = new HashMap<>();
 
         for (SharedWrongOutput wrongOutput : wrongOutputs.values()) {
             ArrayList<String> usernames = wrongOutput.getUsernames();
@@ -126,13 +126,13 @@ public class WrongOutputChecker {
             }
         }
 
-        ArrayList<SuspiciousPair> suspiciousPairs = new ArrayList<>(
+        ArrayList<SharedWrongOutputPair> sharedWrongOutputPairs = new ArrayList<>(
                 pairs.values());
-        suspiciousPairs.sort((first, second) -> Double.compare(
+        sharedWrongOutputPairs.sort((first, second) -> Double.compare(
                 second.getScore(), first.getScore()));
 
         // Show each pair's evidence in question order (Q1a case 1, ...)
-        for (SuspiciousPair pair : suspiciousPairs) {
+        for (SharedWrongOutputPair pair : sharedWrongOutputPairs) {
             pair.getSharedWrongOutputs().sort((first, second) -> {
                 int byQuestion = first.getQuestionId().compareTo(
                         second.getQuestionId());
@@ -146,7 +146,7 @@ public class WrongOutputChecker {
             });
         }
 
-        return suspiciousPairs;
+        return sharedWrongOutputPairs;
     }
 
     // Grades a copy of the blank template and returns its wrong answers.
@@ -266,9 +266,9 @@ public class WrongOutputChecker {
         return false;
     }
 
-    // Keeps one SuspiciousPair per two students, whichever order they
+    // Keeps one SharedWrongOutputPair per two students, whichever order they
     // come in
-    private static void addToPair(HashMap<String, SuspiciousPair> pairs,
+    private static void addToPair(HashMap<String, SharedWrongOutputPair> pairs,
             String firstUsername, String secondUsername,
             SharedWrongOutput wrongOutput) {
         if (firstUsername.compareTo(secondUsername) > 0) {
@@ -280,7 +280,7 @@ public class WrongOutputChecker {
         String key = firstUsername + "|" + secondUsername;
 
         if (!pairs.containsKey(key)) {
-            pairs.put(key, new SuspiciousPair(firstUsername, secondUsername));
+            pairs.put(key, new SharedWrongOutputPair(firstUsername, secondUsername));
         }
 
         pairs.get(key).addSharedWrongOutput(wrongOutput);

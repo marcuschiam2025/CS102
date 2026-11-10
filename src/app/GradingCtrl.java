@@ -19,7 +19,9 @@ import model.Student;
 import model.StudentResult;
 import grading.Grading;
 import grading.GradingResultsViewer;
-import plagiarism.SuspiciousPair;
+import plagiarism.ForeignHeader;
+import plagiarism.HeaderChecker;
+import plagiarism.SharedWrongOutputPair;
 import plagiarism.WrongOutputChecker;
 import checker.FileStructureChecker;
 import exceptions.InvalidZipException;
@@ -36,8 +38,7 @@ public class GradingCtrl {
     private static final String ZIP_EXTENSION = ".zip";
     private static final String CSV_EXTENSION = ".csv";
     // The blank exam, used to ignore answers from unchanged template code
-    private static final String EXAM_TEMPLATE_FOLDER =
-            "Project sample/RenameToYourUsername";
+    private static final String EXAM_TEMPLATE_FOLDER = "Project sample/RenameToYourUsername";
     // Results are exported here, so the input score sheet is not overwritten
     private static final String EXPORT_FILE = "output/ScoreSheet-graded.csv";
 
@@ -325,12 +326,10 @@ public class GradingCtrl {
 
     // e.g. "Score: Q1a 3.0/3.0, Q1b 3.0/3.0, ... Total 12.0/20.0"
     private String describeScores(StudentResult result) {
-        TreeMap<String, QuestionResult> questions =
-                new TreeMap<>(result.getQuestionResults());
+        TreeMap<String, QuestionResult> questions = new TreeMap<>(result.getQuestionResults());
         ArrayList<String> parts = new ArrayList<>();
 
-        for (Map.Entry<String, QuestionResult> question
-                : questions.entrySet()) {
+        for (Map.Entry<String, QuestionResult> question : questions.entrySet()) {
             parts.add(question.getKey() + " "
                     + question.getValue().getScore() + "/"
                     + question.getValue().getMaxScore());
@@ -352,13 +351,23 @@ public class GradingCtrl {
 
     // Pairs of students who share unusual wrong answers, using the output
     // left by grading, so grade first. Highest score first.
-    public ArrayList<SuspiciousPair> findSharedWrongOutputs()
+    public ArrayList<SharedWrongOutputPair> findSharedWrongOutputs()
             throws IOException {
         StudentResult.loadQuestionResultTemplate();
 
-        return WrongOutputChecker.findSuspiciousPairs(new File(UNZIP_FOLDER),
+        return WrongOutputChecker.findSharedWrongOutputPairs(new File(UNZIP_FOLDER),
                 new File(EXAM_TEMPLATE_FOLDER), testerFolder,
                 timeLimitSeconds);
+    }
+
+    public ArrayList<ForeignHeader> findForeignHeaders() {
+        
+            File[] zipfiles = findZipFiles();
+            if (zipfiles == null){
+                return new ArrayList<>();
+            }
+            return HeaderChecker.findForeignHeaders(zipfiles);
+    
     }
 
     public void viewResults() {

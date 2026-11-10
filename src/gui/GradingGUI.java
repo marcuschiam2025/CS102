@@ -17,6 +17,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import model.StudentResult;
+import plagiarism.ForeignHeader;
+import plagiarism.PlagiarismReport;
+import plagiarism.SharedWrongOutputPair;
 
 public class GradingGUI {
 
@@ -111,6 +114,7 @@ public class GradingGUI {
         addButton(buttonList, "Run all steps", () -> runAllStepsOnAll());
         addButton(buttonList, "Run all on one", () -> runAllStepsOnOne());
         addButton(buttonList, "Settings", () -> openSettings());
+        addButton(buttonList, "Check plagiarism", () -> checkPlagiarism());
 
         // Putting the grid at the NORTH of another panel stops the
         // buttons from stretching to fill the whole height
@@ -206,6 +210,29 @@ public class GradingGUI {
             logError("Export failed: could not write " + ctrl.getExportFile()
                     + ". Close it if it is open in another program (e.g. Excel) and try again.");
         }
+    }
+
+    // Runs both plagiarism checks. Check 1 grades the blank template
+    // first, which takes a few seconds, so it runs in the background
+    private void checkPlagiarism() {
+        runInBackground(() -> {
+            log("\nChecking for plagiarism "
+                    + "(uses the output from grading, so grade first)...");
+
+            // 1. Shared wrong answers
+            try {
+                ArrayList<SharedWrongOutputPair> pairs = ctrl.findSharedWrongOutputs();
+                log(PlagiarismReport.formatSharedWrongOutputs(pairs));
+            } catch (IOException exception) {
+                logError("Shared wrong answer check failed: "
+                        + exception.getMessage());
+            }
+
+            // 2. Another student's username in a file. It reads the zips
+            //    itself, so it still runs if check 1 failed.
+            ArrayList<ForeignHeader> foreignHeaders = ctrl.findForeignHeaders();
+            log("\n" + PlagiarismReport.formatForeignHeaders(foreignHeaders));
+        });
     }
 
     // Runs one step (or all of them) on every submission
