@@ -54,6 +54,7 @@ public class GradingCtrl {
     private String scoreSheetFile = "Project sample/IS442-ScoreSheet.csv";
     private String studentResultTemplateFile =
             "Project sample/StudentResultTemplate.csv";
+    private static String modelFolder = "Project sample/RenameToYourUsername";
     private int timeLimitSeconds = DEFAULT_TIME_LIMIT;
 
     private ArrayList<StudentResult> studentResults = new ArrayList<>();
@@ -83,6 +84,10 @@ public class GradingCtrl {
 
     public int getTimeLimitSeconds() {
         return timeLimitSeconds;
+    }
+
+    public static String getModelFolder() {
+        return modelFolder;
     }
 
     // Returns false (and keeps the old folder) if the input is empty
@@ -140,6 +145,15 @@ public class GradingCtrl {
         }
 
         timeLimitSeconds = seconds;
+        return true;
+    }
+
+    public boolean setModelFolder(String folder) {
+        if (!isExistingFolder(folder)) {
+            return false;
+        }
+
+        modelFolder = folder;
         return true;
     }
 
