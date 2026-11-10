@@ -1,6 +1,6 @@
 package fixer;
 
-import filehandling.FileHandlings;
+import fileHandling.FileHandlings;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;

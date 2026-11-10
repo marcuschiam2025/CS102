@@ -104,6 +104,8 @@ public class GradingResultsViewer {
             for (StudentResult studentResult : studentResults) {
                 Student student = studentResult.getStudent();
 
+                System.out.println(student);
+
                 csvWriter.println("#" + student.getOrgDefinedId()
                         + ",#" + student.getUsername().trim()
                         + "," + student.getLastName().trim()

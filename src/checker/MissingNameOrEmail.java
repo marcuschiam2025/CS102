@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 import exceptions.MissingEmailException;
 import exceptions.MissingNameException;
-import filehandling.FileHandlings;
+import fileHandling.FileHandlings;
 
 public class MissingNameOrEmail {
     // The header comment has the name on the 2nd line and the email on the
