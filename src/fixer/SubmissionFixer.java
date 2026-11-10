@@ -46,7 +46,7 @@ public class SubmissionFixer {
         // 1. Remove junk first, so a __MACOSX folder is not mistaken
         //    for the student's folder
         if (hasProblem(foundProblems, AdditionalFileException.class)) {
-            JunkFileCleaner.clean(root, messages, fixProblems);
+            JunkFileCleaner.junkCleaner(root, messages, fixProblems);
         }
 
         // 2. Pull Q1/Q2/Q3 out of any extra folders, e.g.
@@ -59,9 +59,9 @@ public class SubmissionFixer {
         //    that Q1/Q2/Q3 at the top are moved, not renamed.
         if (hasProblem(foundProblems, FolderNameException.class)
                 || hasProblem(foundProblems, MissingFolderException.class)) {
-            HierarchyFixer.fix(root, usernameFolder, QUESTIONS, messages,
+            HierarchyFixer.hierarchyFix(root, usernameFolder, QUESTIONS, messages,
                     fixProblems);
-            FolderNameFixer.fix(root, username, messages, fixProblems);
+            FolderNameFixer.foldNameFix(root, username, messages, fixProblems);
         }
 
         if (usernameFolder.isDirectory()) {
@@ -69,7 +69,7 @@ public class SubmissionFixer {
             if (hasProblem(foundProblems, MissingFileException.class)
                     || hasProblem(foundProblems,
                             MissingFolderException.class)) {
-                MisplacedFileFixer.fix(usernameFolder, messages,
+                MisplacedFileFixer.misplacedFileFix(usernameFolder, messages,
                         fixProblems);
             }
 
@@ -77,7 +77,7 @@ public class SubmissionFixer {
             if (hasProblem(foundProblems, MissingNameException.class)
                     || hasProblem(foundProblems,
                             MissingEmailException.class)) {
-                HeaderFixer.fix(usernameFolder, username, studentName,
+                HeaderFixer.headerFix(usernameFolder, username, studentName,
                         messages, fixProblems);
             }
         }

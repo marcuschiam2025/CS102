@@ -21,11 +21,11 @@ public class JunkFileCleaner {
     //   no Circle.java) are kept.
     public static void clean(File folder, ArrayList<String> messages) {
         ArrayList<Exception> problems = new ArrayList<>();
-        clean(folder, messages, problems);
+        junkCleaner(folder, messages, problems);
         addProblemMessages(messages, problems);
     }
 
-    public static void clean(File folder, ArrayList<String> messages,
+    public static void junkCleaner(File folder, ArrayList<String> messages,
             ArrayList<Exception> problems) {
         File[] items = folder.listFiles();
 
@@ -50,7 +50,7 @@ public class JunkFileCleaner {
                         messages.add("Removed " + MAC_FOLDER + " folder.");
                     }
                 } else {
-                    clean(item, messages, problems);
+                    junkCleaner(item, messages, problems);
                 }
             } else if (name.equals(MAC_FILE)) {
                 if (item.delete()) {

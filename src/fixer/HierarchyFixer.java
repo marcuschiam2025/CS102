@@ -11,13 +11,13 @@ public class HierarchyFixer {
     public static boolean fix(File root, File usernameFolder,
             String[] questions, ArrayList<String> messages) {
         ArrayList<Exception> problems = new ArrayList<>();
-        boolean fixed = fix(root, usernameFolder, questions, messages,
+        boolean fixed = hierarchyFix(root, usernameFolder, questions, messages,
                 problems);
         addProblemMessages(messages, problems);
         return fixed;
     }
 
-    public static boolean fix(File root, File usernameFolder,
+    public static boolean hierarchyFix(File root, File usernameFolder,
             String[] questions, ArrayList<String> messages,
             ArrayList<Exception> problems) {
         boolean questionsAtRoot = false;

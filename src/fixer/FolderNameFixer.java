@@ -12,11 +12,11 @@ public class FolderNameFixer {
     public static void fix(File root, String username,
             ArrayList<String> messages) {
         ArrayList<Exception> problems = new ArrayList<>();
-        fix(root, username, messages, problems);
+        foldNameFix(root, username, messages, problems);
         addProblemMessages(messages, problems);
     }
 
-    public static void fix(File root, String username,
+    public static void foldNameFix(File root, String username,
             ArrayList<String> messages, ArrayList<Exception> problems) {
         File usernameFolder = new File(root, username);
         File[] items = root.listFiles();

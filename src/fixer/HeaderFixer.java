@@ -34,13 +34,13 @@ public class HeaderFixer {
     public static void fix(File submissionFolder, String username,
             String studentName, ArrayList<String> messages) {
         ArrayList<Exception> problems = new ArrayList<>();
-        fix(submissionFolder, username, studentName, messages, problems);
+        headerFix(submissionFolder, username, studentName, messages, problems);
         for (Exception problem : problems) {
             messages.add(problem.getMessage());
         }
     }
 
-    public static void fix(File submissionFolder, String username,
+    public static void headerFix(File submissionFolder, String username,
             String studentName, ArrayList<String> messages,
             ArrayList<Exception> problems) {
         ArrayList<File> javaFiles = new ArrayList<>();
