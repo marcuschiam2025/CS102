@@ -221,8 +221,6 @@ public class Grading {
 
         List<String> resultLines = findResultLines(outputFile, questionId);
 
-        System.out.println(resultLines);
-
         if (resultLines.size() == 0) {
             // e.g. the student's code threw an exception the tester
             // did not catch, so no result was printed
@@ -248,7 +246,6 @@ public class Grading {
                 status = CaseResultStatus.FAILED;
             }
 
-            System.out.println(caseId);
             studentResult.addCaseResult(questionId, caseId, marks, status, "");
         }
         return true;
@@ -351,7 +348,6 @@ public class Grading {
         List<String> resultLines = new ArrayList<>();
 
         for (String line : lines) {
-            System.out.println(line);
             if (resultPattern.matcher(line.trim()).matches()) {
                 resultLines.add(line.trim());
             }
