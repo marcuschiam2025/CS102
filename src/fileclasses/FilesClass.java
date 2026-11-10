@@ -1,4 +1,4 @@
-package fileClasses;
+package fileclasses;
 
 public class FilesClass {
     private String fileName;

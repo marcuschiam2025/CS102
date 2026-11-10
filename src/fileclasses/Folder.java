@@ -1,4 +1,4 @@
-package fileClasses;
+package fileclasses;
 
 import java.util.ArrayList;
 
