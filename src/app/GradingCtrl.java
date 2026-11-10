@@ -22,6 +22,8 @@ import grading.GradingResultsViewer;
 import plagiarism.ForeignHeader;
 import plagiarism.HeaderChecker;
 import plagiarism.SharedWrongOutputPair;
+import plagiarism.SimilarCode;
+import plagiarism.SimilarCodeChecker;
 import plagiarism.WrongOutputChecker;
 import checker.FileStructureChecker;
 import exceptions.InvalidZipException;
@@ -421,7 +423,21 @@ public class GradingCtrl {
                 return new ArrayList<>();
             }
             return HeaderChecker.findForeignHeaders(zipfiles);
-    
+
+    }
+
+    // Pairs of students whose code in one file is very similar, after the
+    // exam template's code is taken out. Reads the zips, so it does not
+    // need grading first. Most similar first.
+    public ArrayList<SimilarCode> findSimilarCode() {
+        File[] zipFiles = findZipFiles();
+
+        if (zipFiles == null) {
+            return new ArrayList<>();
+        }
+
+        return SimilarCodeChecker.findSimilarCode(zipFiles,
+                new File(EXAM_TEMPLATE_FOLDER));
     }
 
     public void viewResults() {

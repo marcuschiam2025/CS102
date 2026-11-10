@@ -85,6 +85,28 @@ public class Grading {
         }
     }
 
+    // Keeps a copy of the tester output and errors in the question folder,
+    // e.g. Q1/Q1aTester_output.txt and Q1/Q1a_compile.txt, because
+    // output.txt and error.txt are deleted after grading.
+    // The plagiarism check for shared wrong answers reads these copies.
+    private static void saveOutput(File folder, String outputName, String questionId) {
+        try {
+            if (outputFile.exists()) {
+                Files.copy(outputFile.toPath(), new File(folder, outputName + "_output.txt").toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // Also marks the question as graded, even if nothing compiled
+            File compileFile = new File(folder, questionId + "_compile.txt");
+            if (errorFile.exists()) {
+                Files.copy(errorFile.toPath(), compileFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                compileFile.createNewFile();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void runTesterFiles(File[] testerFiles, File questionFolder, int timeLimitSeconds, StudentResult studentResult) {
         // the testers below are run as source files, which does not compile the
         // student's code, so compile it first
@@ -126,6 +148,9 @@ public class Grading {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+
+                // e.g. Q1aPart2Tester.java -> Q1/Q1aPart2Tester_output.txt
+                saveOutput(testerFile.getParentFile(), testerName.replaceAll("\\.java$", ""), testerName.replaceAll("Part\\d+Tester.java$", ""));
 
                 if (!success) {
                     studentResult.addCaseResult(testerName.replaceAll("Part\\d+Tester.java$", ""), testerName.replaceAll("^Q.+Part(?=\\d+Tester\\.java)|Tester\\.java", ""), 0.0, CaseResultStatus.TIMEOUT, "");
@@ -295,6 +320,15 @@ public class Grading {
             }
         } else {
             readOutputFile(studentResult);
+
+            // One output file holds every question, so give each question
+            // a copy, e.g. Q1/Q1aTester_output.txt
+            for (String questionId : questionAndCaseIds.keySet()) {
+                File folder = new File(questionFolder, questionId.replaceAll("(?<=Q\\d+).+", ""));
+                if (folder.isDirectory()) {
+                    saveOutput(folder, questionId + "Tester", questionId);
+                }
+            }
         }
 
         for (File existingQuestionFile : existingQuestionFiles) {

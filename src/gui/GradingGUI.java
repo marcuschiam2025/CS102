@@ -20,6 +20,7 @@ import model.StudentResult;
 import plagiarism.ForeignHeader;
 import plagiarism.PlagiarismReport;
 import plagiarism.SharedWrongOutputPair;
+import plagiarism.SimilarCode;
 
 public class GradingGUI {
 
@@ -277,6 +278,10 @@ public class GradingGUI {
             //    itself, so it still runs if check 1 failed.
             ArrayList<ForeignHeader> foreignHeaders = ctrl.findForeignHeaders();
             log("\n" + PlagiarismReport.formatForeignHeaders(foreignHeaders));
+
+            // 3. Very similar code. Also reads the zips itself.
+            ArrayList<SimilarCode> similarCode = ctrl.findSimilarCode();
+            log("\n" + PlagiarismReport.formatSimilarCode(similarCode));
         });
     }
 

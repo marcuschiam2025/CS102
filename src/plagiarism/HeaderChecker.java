@@ -34,7 +34,8 @@ public class HeaderChecker {
         return usernames;
     }
 
-    private static ArrayList<String[]> readJavaFiles(File zipFile) throws IOException {
+    // Also used by SimilarCodeChecker. Each item is { entry name, text }.
+    static ArrayList<String[]> readJavaFiles(File zipFile) throws IOException {
         ArrayList<String[]> javaFiles = new ArrayList<>();
         try (ZipFile zip = new ZipFile(zipFile)) { // open the zip (auto-closed)
             for (ZipEntry entry : Collections.list(zip.entries())) {

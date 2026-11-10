@@ -52,4 +52,23 @@ public class PlagiarismReport {
         }
         return report.toString();
     }
+
+    // e.g. "fen.lai.2022 & david.2024   Q2b.java   91%"
+    public static String formatSimilarCode(ArrayList<SimilarCode> similarCode) {
+        if (similarCode.isEmpty()) {
+            return "No two students have very similar code.\n";
+        }
+
+        StringBuilder report = new StringBuilder();
+        report.append("Files with very similar code "
+                + "(the exam template's code is not counted):\n");
+        for (SimilarCode code : similarCode) {
+            report.append(String.format("   %s & %s   %s   %.0f%%%n",
+                    code.getFirstUsername(), code.getSecondUsername(),
+                    code.getFileName(), code.getSimilarity() * 100));
+        }
+        report.append("This is a reason to look closer, not proof.\n");
+
+        return report.toString();
+    }
 }
