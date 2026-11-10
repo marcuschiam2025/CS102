@@ -5,12 +5,12 @@ import java.util.ArrayList;
 // Two students and the evidence against them. The score adds up the
 // weight of everything they share, so a higher score means they share
 // more answers, or rarer ones. It is a reason to look closer, not proof.
-public class SuspiciousPair {
+public class SharedWrongOutputPair {
     private String firstUsername;
     private String secondUsername;
     private ArrayList<SharedWrongOutput> sharedWrongOutputs;
 
-    public SuspiciousPair(String firstUsername, String secondUsername) {
+    public SharedWrongOutputPair(String firstUsername, String secondUsername) {
         this.firstUsername = firstUsername;
         this.secondUsername = secondUsername;
         this.sharedWrongOutputs = new ArrayList<>();
@@ -44,7 +44,7 @@ public class SuspiciousPair {
 
     @Override
     public String toString() {
-        return "SuspiciousPair [" + firstUsername + " & " + secondUsername
+        return "SharedWrongOutputPair [" + firstUsername + " & " + secondUsername
                 + ", score=" + getScore() + ", shared="
                 + sharedWrongOutputs.size() + "]";
     }

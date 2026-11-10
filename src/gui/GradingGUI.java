@@ -17,6 +17,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import model.StudentResult;
+import plagiarism.ForeignHeader;
+import plagiarism.PlagiarismReport;
+import plagiarism.SharedWrongOutputPair;
 
 public class GradingGUI {
 
@@ -67,7 +70,8 @@ public class GradingGUI {
             frame.setResizable(false);
             frame.getContentPane().setBackground(GuiStyle.BACKGROUND);
 
-            settings = new SettingGUI(ctrl, () -> cards.show(screens, MAIN_SCREEN));
+            settings = new SettingGUI(ctrl,
+                    () -> cards.show(screens, MAIN_SCREEN));
 
             screens.add(createMainScreen(), MAIN_SCREEN);
             screens.add(settings.createSettingsScreen(), SETTINGS_SCREEN);
@@ -82,7 +86,8 @@ public class GradingGUI {
     private JPanel createMainScreen() {
         JPanel main = new JPanel(new BorderLayout(GuiStyle.GAP, GuiStyle.GAP));
         main.setBackground(GuiStyle.BACKGROUND);
-        main.setBorder(BorderFactory.createEmptyBorder(GuiStyle.GAP, GuiStyle.GAP, GuiStyle.GAP, GuiStyle.GAP));
+        main.setBorder(BorderFactory.createEmptyBorder(GuiStyle.GAP,
+                GuiStyle.GAP, GuiStyle.GAP, GuiStyle.GAP));
 
         JLabel title = GuiStyle.createTitle("Auto Grading System");
 
@@ -102,13 +107,17 @@ public class GradingGUI {
     // console menu (GradingMenu)
     private JPanel createSidebar() {
 
-        JPanel buttonList = new JPanel(new GridLayout(0, 1, GuiStyle.GAP, GuiStyle.GAP));
+        JPanel buttonList =
+                new JPanel(new GridLayout(0, 1, GuiStyle.GAP, GuiStyle.GAP));
         buttonList.setBackground(GuiStyle.BACKGROUND);
 
         // Grading steps
-        addButton(buttonList, "1. Check submissions", () -> checkAllSubmissions());
-        fixButton = addButton(buttonList, "2. Fix submissions", () -> fixAllSubmissions());
-        gradeButton = addButton(buttonList, "3. Grade submissions", () -> gradeAllSubmissions());
+        addButton(buttonList, "1. Check submissions",
+                () -> checkAllSubmissions());
+        fixButton = addButton(buttonList, "2. Fix submissions",
+                () -> fixAllSubmissions());
+        gradeButton = addButton(buttonList, "3. Grade submissions",
+                () -> gradeAllSubmissions());
         updateStepButtons();
 
         // Results
@@ -119,6 +128,7 @@ public class GradingGUI {
         addButton(buttonList, "Run all steps", () -> runAllStepsOnAll());
         addButton(buttonList, "Run all on one", () -> runAllStepsOnOne());
         addButton(buttonList, "Settings", () -> openSettings());
+        addButton(buttonList, "Check plagiarism", () -> checkPlagiarism());
 
         // Putting the grid at the NORTH of another panel stops the
         // buttons from stretching to fill the whole height
@@ -143,7 +153,8 @@ public class GradingGUI {
         outputArea.setBackground(GuiStyle.PANEL);
         outputArea.setForeground(GuiStyle.TEXT);
         outputArea.setFont(GuiStyle.OUTPUT_FONT);
-        outputArea.setBorder(BorderFactory.createEmptyBorder(GuiStyle.GAP, GuiStyle.GAP, GuiStyle.GAP, GuiStyle.GAP));
+        outputArea.setBorder(BorderFactory.createEmptyBorder(GuiStyle.GAP,
+                GuiStyle.GAP, GuiStyle.GAP, GuiStyle.GAP));
 
         // JScrollPane adds scroll bars when the text gets long
         JScrollPane scrollPane = new JScrollPane(outputArea);
@@ -157,7 +168,7 @@ public class GradingGUI {
         return statusLabel;
     }
 
-// -----------------------------------Button actions----------------------------------
+    // ---------------------------- Button actions ----------------------------
 
     private void checkAllSubmissions() {
         runInBackground(() -> {
@@ -224,8 +235,32 @@ public class GradingGUI {
             log("\nSuccessfully exported to " + ctrl.getExportFile());
         } else {
             logError("Export failed: could not write " + ctrl.getExportFile()
-                    + ". Close it if it is open in another program (e.g. Excel) and try again.");
+                    + ". Close it if it is open in another program"
+                    + " (e.g. Excel) and try again.");
         }
+    }
+
+    // Runs both plagiarism checks. Check 1 grades the blank template
+    // first, which takes a few seconds, so it runs in the background
+    private void checkPlagiarism() {
+        runInBackground(() -> {
+            log("\nChecking for plagiarism "
+                    + "(uses the output from grading, so grade first)...");
+
+            // 1. Shared wrong answers
+            try {
+                ArrayList<SharedWrongOutputPair> pairs = ctrl.findSharedWrongOutputs();
+                log(PlagiarismReport.formatSharedWrongOutputs(pairs));
+            } catch (IOException exception) {
+                logError("Shared wrong answer check failed: "
+                        + exception.getMessage());
+            }
+
+            // 2. Another student's username in a file. It reads the zips
+            //    itself, so it still runs if check 1 failed.
+            ArrayList<ForeignHeader> foreignHeaders = ctrl.findForeignHeaders();
+            log("\n" + PlagiarismReport.formatForeignHeaders(foreignHeaders));
+        });
     }
 
     // Runs one step (or all of them) on every submission.
@@ -242,7 +277,8 @@ public class GradingGUI {
         int failed = 0;
 
         for (int i = 0; i < zipFiles.length; i++) {
-            log("\n[" + (i + 1) + "/" + zipFiles.length + "] " + zipFiles[i].getName());
+            log("\n[" + (i + 1) + "/" + zipFiles.length + "] "
+                    + zipFiles[i].getName());
 
             if (!processSubmission(zipFiles[i], step)) {
                 failed++;
@@ -251,7 +287,8 @@ public class GradingGUI {
 
         // 3. Show a summary
         int processed = zipFiles.length - failed;
-        log("\nDone. " + processed + " of " + zipFiles.length + " submissions processed.");
+        log("\nDone. " + processed + " of " + zipFiles.length
+                + " submissions processed.");
         return true;
     }
 
@@ -278,7 +315,7 @@ public class GradingGUI {
         cards.show(screens, SETTINGS_SCREEN);
     }
 
-    // -----------------------------------HELPER----------------------------------
+    // -------------------------------- Helpers -------------------------------
 
     // Grading runs the testers, which takes a few seconds per student.
     // Doing that on the GUI thread would freeze the window, so it runs on
@@ -326,8 +363,9 @@ public class GradingGUI {
             names[i] = zipFiles[i].getName();
         }
 
-        Object choice = JOptionPane.showInputDialog(frame, "Choose a submission:",
-                "Run all steps on one submission", JOptionPane.PLAIN_MESSAGE,
+        Object choice = JOptionPane.showInputDialog(frame,
+                "Choose a submission:", "Run all steps on one submission",
+                JOptionPane.PLAIN_MESSAGE,
                 null, names, names[0]);
 
         for (int i = 0; i < names.length; i++) {
@@ -345,7 +383,8 @@ public class GradingGUI {
         File[] zipFiles = ctrl.findZipFiles();
 
         if (zipFiles == null) {
-            logError("Submissions folder not found: " + ctrl.getSubmissionsFolder());
+            logError("Submissions folder not found: "
+                    + ctrl.getSubmissionsFolder());
             return null;
         }
 

@@ -59,7 +59,8 @@ class CaseResult {
         return details;
     }
 
-    public void setCaseResult(double score, CaseResultStatus status, String details) {
+    public void setCaseResult(double score, CaseResultStatus status,
+            String details) {
         this.score = score;
         this.status = status;
         this.details = details;
@@ -80,7 +81,8 @@ class CaseResult {
 public class QuestionResult implements Cloneable {
     // private String questionId;
     // questions are split into cases for more analysis
-    private HashMap<String, CaseResult> cases = new HashMap<String, CaseResult>();
+    private HashMap<String, CaseResult> cases =
+            new HashMap<String, CaseResult>();
 
     // public QuestionResult(String questionId) {
     //     this.questionId = questionId;
@@ -103,7 +105,8 @@ public class QuestionResult implements Cloneable {
         cases.put(caseId, new CaseResult(maxScore));
     }
 
-    public QuestionResult() {}
+    public QuestionResult() {
+    }
 
     // public String getQuestionId() {
     //     return questionId;
@@ -167,7 +170,8 @@ public class QuestionResult implements Cloneable {
         QuestionResult questionResultNew = new QuestionResult();
 
         for (Map.Entry<String, CaseResult> caseResult : cases.entrySet()) {
-            questionResultNew.addCaseResult(caseResult.getKey().toString(), Double.valueOf(caseResult.getValue().getMaxScore()));
+            questionResultNew.addCaseResult(caseResult.getKey(),
+                    caseResult.getValue().getMaxScore());
         }
 
         return questionResultNew;

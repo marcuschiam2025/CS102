@@ -9,13 +9,13 @@ public class MisplacedFileFixer {
 
     public static void fix(File usernameFolder, ArrayList<String> messages) {
         ArrayList<Exception> problems = new ArrayList<>();
-        fix(usernameFolder, messages, problems);
+        misplacedFileFix(usernameFolder, messages, problems);
         for (Exception problem : problems) {
             messages.add(problem.getMessage());
         }
     }
 
-    public static void fix(File usernameFolder, ArrayList<String> messages,
+    public static void misplacedFileFix(File usernameFolder, ArrayList<String> messages,
             ArrayList<Exception> problems) {
         File q1Folder = new File(usernameFolder, "Q1");
         createFolder(q1Folder, problems);

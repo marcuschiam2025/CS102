@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-
 import model.CaseResultStatus;
 import model.QuestionResult;
 import model.Student;
@@ -34,7 +33,7 @@ public class Grading {
     private static final String RUNTIME_ERROR_TEXT = "(Runtime Error)";
 
     // Grades every case in the question template, which must be loaded
-    // first (StudentResult.loadQuestionResultTemplate).
+    // first (StudentResult.loadStudentResultTemplate).
     // usernameFolder is the folder that holds Q1, Q2 and Q3.
     public static StudentResult gradePaper(Student student,
             File usernameFolder, String testerFolder, int timeLimitSeconds) {
@@ -51,11 +50,11 @@ public class Grading {
                 gradeQuestion(studentResult, questionId, caseIds,
                         usernameFolder, new File(testerFolder),
                         timeLimitSeconds);
-            } catch (IOException e) {
+            } catch (IOException exception) {
                 setAllCases(studentResult, questionId, caseIds,
                         CaseResultStatus.RUNTIME_ERROR,
-                        "Could not grade: " + e.getMessage());
-            } catch (InterruptedException e) {
+                        "Could not grade: " + exception.getMessage());
+            } catch (InterruptedException exception) {
                 // Grading was stopped, so leave the rest ungraded
                 Thread.currentThread().interrupt();
                 break;
@@ -112,14 +111,15 @@ public class Grading {
         }
 
         // 2. Generate question tester folder for faster marking
-        boolean generateSuccess = generateQuestionTester(questionId, questionFolder, testerNames);
+        boolean generateSuccess = generateQuestionTester(questionId,
+                questionFolder, testerNames);
 
         // 3. Compile them once, together with the student's code
         File compileFile = new File(questionFolder,
                 questionId + "_compile.txt");
 
         if (!compile(questionFolder, testerNames, compileFile,
-            questionId, generateSuccess)) {
+                questionId, generateSuccess)) {
             setAllCases(studentResult, questionId, caseIds,
                     CaseResultStatus.COMPILE_ERROR,
                     firstErrorLine(compileFile));
@@ -129,7 +129,8 @@ public class Grading {
         // 4. Run all cases in the question folder (to make the program faster)
         boolean allCasesSuccess = false;
         if (generateSuccess) {
-            allCasesSuccess = runAllCases(studentResult, questionId, caseIds, questionFolder, timeLimitSeconds);
+            allCasesSuccess = runAllCases(studentResult, questionId, caseIds,
+                    questionFolder, timeLimitSeconds);
         }
 
         // 5. If step 4 fails, run each case on its own
@@ -140,14 +141,15 @@ public class Grading {
             }
         }
 
-        // 6. Cleanup all tester files to prepare for next one (to prevent wrong marking)
+        // 6. Cleanup all tester files to prepare for next one
+        // (to prevent wrong marking)
         cleanupTesters(questionFolder, testerNames,
-            questionId, generateSuccess);
+                questionId, generateSuccess);
     }
 
     // generate a tester file for the question
     private static boolean generateQuestionTester(String questionId,
-        File questionFolder, ArrayList<String> testerNames) {
+            File questionFolder, ArrayList<String> testerNames) {
         String questionTesterName = questionId + "Tester.java";
         File questionTester = new File(questionFolder, questionTesterName);
         try (PrintStream ps = new PrintStream(questionTester)) {
@@ -160,7 +162,7 @@ public class Grading {
             }
             // close
             ps.println("}}");
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundException exception) {
             // skip marking all questions at once if it fails
             return false;
         }
@@ -341,8 +343,8 @@ public class Grading {
     }
 
     // questionId only
-    private static List<String> findResultLines(File outputFile, String questionId)
-    throws IOException {
+    private static List<String> findResultLines(File outputFile,
+            String questionId) throws IOException {
         Pattern resultPattern = Pattern.compile(
                 Pattern.quote(questionId + ",")
                         + "\\d+,.*,.*,(true|false),\\d+(\\.\\d+)?");
@@ -422,18 +424,21 @@ public class Grading {
 
     public static void main(String[] args) {
         StudentResult.loadStudentResultTemplate();
-        StudentResult result = gradePaper(
-            new Student("#01400003", "david.2024", "Kong", "David", "david.kong.2024@computing.smu.edu.sg"),
-            new File("unzippedFolder\\2023-2024-david.2024\\david.2024"),
-            "Project sample/TesterFiles",
-            5
-        );
+        Student student = new Student("#01400003", "david.2024", "Kong",
+                "David", "david.kong.2024@computing.smu.edu.sg");
+        File submission =
+                new File("unzippedFolder\\2023-2024-david.2024\\david.2024");
+        int timeLimitSeconds = 5;
 
-        for (QuestionResult qr : result.getQuestionResults().values()) {
-            System.out.println(qr.getCases());
-            System.out.println(qr.getScore());
+        StudentResult result = gradePaper(student, submission,
+                "Project sample/TesterFiles", timeLimitSeconds);
+
+        for (QuestionResult questionResult
+                : result.getQuestionResults().values()) {
+            System.out.println(questionResult.getCases());
+            System.out.println(questionResult.getScore());
         }
-        
+
         System.out.println(result);
     }
 }

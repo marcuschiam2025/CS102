@@ -1,9 +1,8 @@
 package model;
 
-// import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,26 +12,32 @@ import app.GradingCtrl;
 // All question scores for one student, plus the total
 public class StudentResult {
     private Student student;
-    private HashMap<String, QuestionResult> questionResults = new HashMap<String, QuestionResult>();
+    private HashMap<String, QuestionResult> questionResults =
+            new HashMap<String, QuestionResult>();
     // suggestion:
     // GradingResults for StudentResult
     // question data (max score) can be put into another java class
-    // (its not possible to detemine the max score if a compilation error occurs)
-    
+    // (its not possible to detemine the max score if a compilation error
+    // occurs)
+
     // i combined GradingResult with QuestionResult's status enum and max marks
     // should we keep part result???
     // max marks and question number must be put into a template class
-    // grading result takes an instance of the template class and uses it to mark
+    // grading result takes an instance of the template class and uses it
+    // to mark
 
     // template map for question results
-    public static HashMap<String, QuestionResult> studentResultTemplate = new HashMap<String, QuestionResult>();
+    public static HashMap<String, QuestionResult> studentResultTemplate =
+            new HashMap<String, QuestionResult>();
 
     public StudentResult(Student student) {
         this.student = student;
 
         // prevent looking at the same HashMap address
-        for (Map.Entry<String, QuestionResult> questionResult : studentResultTemplate.entrySet()) {
-            questionResults.put(questionResult.getKey(), questionResult.getValue().clone());
+        for (Map.Entry<String, QuestionResult> questionResult
+                : studentResultTemplate.entrySet()) {
+            questionResults.put(questionResult.getKey(),
+                    questionResult.getValue().clone());
         }
     }
 
@@ -44,22 +49,33 @@ public class StudentResult {
         return questionResults;
     }
 
-    public void addQuestionResult(String questionId, QuestionResult questionResult) {
+    public void addQuestionResult(String questionId,
+            QuestionResult questionResult) {
         questionResults.put(questionId, questionResult);
     }
 
     public void addQuestionResult(StudentResult studentResult) {
-        for (Map.Entry<String, QuestionResult> questionResult : studentResult.getQuestionResults().entrySet()) {
-            for (Map.Entry<String, CaseResult> caseResult : questionResult.getValue().getCases().entrySet()) {
-                CaseResult caseResultOriginal = this.questionResults.get(questionResult.getKey()).getCaseResult(caseResult.getKey());
+        for (Map.Entry<String, QuestionResult> questionResult
+                : studentResult.getQuestionResults().entrySet()) {
+            QuestionResult questionOriginal =
+                    this.questionResults.get(questionResult.getKey());
+
+            for (Map.Entry<String, CaseResult> caseResult
+                    : questionResult.getValue().getCases().entrySet()) {
+                CaseResult caseResultOriginal =
+                        questionOriginal.getCaseResult(caseResult.getKey());
                 CaseResult caseResultCopy = caseResult.getValue();
-                caseResultOriginal.setCaseResult(caseResultCopy.getScore(), caseResultCopy.getStatus(), caseResultCopy.getDetails());
+                caseResultOriginal.setCaseResult(caseResultCopy.getScore(),
+                        caseResultCopy.getStatus(),
+                        caseResultCopy.getDetails());
             }
         }
     }
 
-    public void addCaseResult(String questionId, String caseId, double score, CaseResultStatus status, String details) {
-        this.questionResults.get(questionId).getCaseResult(caseId).setCaseResult(score, status, details);
+    public void addCaseResult(String questionId, String caseId,
+            double score, CaseResultStatus status, String details) {
+        this.questionResults.get(questionId).getCaseResult(caseId)
+                .setCaseResult(score, status, details);
     }
 
     // Returns the result for one question, e.g. "Q1a",
@@ -85,10 +101,13 @@ public class StudentResult {
     }
 
     public HashMap<String, ArrayList<String>> getQuestionAndCaseIds() {
-        HashMap<String, ArrayList<String>> questionIds = new HashMap<String, ArrayList<String>>();
+        HashMap<String, ArrayList<String>> questionIds =
+                new HashMap<String, ArrayList<String>>();
 
-        for (Map.Entry<String, QuestionResult> questionResult : questionResults.entrySet()) {
-            questionIds.put(questionResult.getKey(), questionResult.getValue().getCaseIds());
+        for (Map.Entry<String, QuestionResult> questionResult
+                : questionResults.entrySet()) {
+            questionIds.put(questionResult.getKey(),
+                    questionResult.getValue().getCaseIds());
         }
 
         return questionIds;
@@ -97,7 +116,9 @@ public class StudentResult {
     public static void loadStudentResultTemplate() {
         GradingCtrl ctrl = new GradingCtrl();
 
-        try (Scanner sc = new Scanner(new File(ctrl.getStudentResultTemplateFile()))) {
+        File templateFile = new File(ctrl.getStudentResultTemplateFile());
+
+        try (Scanner sc = new Scanner(templateFile)) {
             sc.nextLine();
 
             while (sc.hasNext()) {
@@ -107,13 +128,15 @@ public class StudentResult {
                 double maxScore = Double.parseDouble(caseData[2].trim());
 
                 if (studentResultTemplate.containsKey(questionId)) {
-                    studentResultTemplate.get(questionId).addCaseResult(caseId, maxScore);
+                    studentResultTemplate.get(questionId)
+                            .addCaseResult(caseId, maxScore);
                 } else {
-                    studentResultTemplate.put(questionId, new QuestionResult(caseId, maxScore));
+                    studentResultTemplate.put(questionId,
+                            new QuestionResult(caseId, maxScore));
                 }
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException exception) {
+            exception.printStackTrace();
         }
     }
 
@@ -130,7 +153,9 @@ public class StudentResult {
         System.out.println(studentResultTemplate);
         Student test = new Student("a", "a", "a", "a", "a");
         StudentResult testResult = new StudentResult(test);
-        testResult.getQuestionResult("Q3").getCaseResult("4").setCaseResult(1.0, CaseResultStatus.PASSED);
-        System.out.println(testResult.getTotalScore() == new StudentResult(test).getTotalScore());
+        testResult.getQuestionResult("Q3").getCaseResult("4")
+                .setCaseResult(1.0, CaseResultStatus.PASSED);
+        System.out.println(testResult.getTotalScore()
+                == new StudentResult(test).getTotalScore());
     }
 }

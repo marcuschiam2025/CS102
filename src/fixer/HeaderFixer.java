@@ -19,7 +19,8 @@ public class HeaderFixer {
     // A Name line that already has a name after the colon. A name the
     // student wrote themselves (e.g. a longer full name) is kept.
     private static final Pattern FILLED_NAME_LINE =
-            Pattern.compile("(?im)^[ \\t]*\\*?[ \\t]*Name[ \\t]*:[ \\t]*\\S.*$");
+            Pattern.compile("(?im)^[ \\t]*\\*?[ \\t]*Name[ \\t]*:"
+                    + "[ \\t]*\\S.*$");
 
     // A line like " * Email ID: ping.lee.2023", with at least one space
     // between "Email" and "ID"
@@ -33,13 +34,13 @@ public class HeaderFixer {
     public static void fix(File submissionFolder, String username,
             String studentName, ArrayList<String> messages) {
         ArrayList<Exception> problems = new ArrayList<>();
-        fix(submissionFolder, username, studentName, messages, problems);
+        headerFix(submissionFolder, username, studentName, messages, problems);
         for (Exception problem : problems) {
             messages.add(problem.getMessage());
         }
     }
 
-    public static void fix(File submissionFolder, String username,
+    public static void headerFix(File submissionFolder, String username,
             String studentName, ArrayList<String> messages,
             ArrayList<Exception> problems) {
         ArrayList<File> javaFiles = new ArrayList<>();
