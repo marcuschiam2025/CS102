@@ -7,7 +7,9 @@ import java.util.ArrayList;
 
 import exceptions.MissingEmailException;
 import exceptions.MissingNameException;
+// import checker.StructureChecker;
 import fileHandling.FileHandlings;
+// Co-authored with ChatGPT
 
 public class MissingNameOrEmail {
     // The header comment has the name on the 2nd line and the email on the
