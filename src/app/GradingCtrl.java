@@ -28,6 +28,8 @@ import plagiarism.WrongOutputChecker;
 import checker.FileStructureChecker;
 import exceptions.InvalidZipException;
 
+// Co-authored with Claude
+
 // Does the work behind the menu and keeps the settings. It never prints
 // anything, it only returns results so the menu can decide how to show them.
 public class GradingCtrl {
@@ -313,13 +315,15 @@ public class GradingCtrl {
             }
 
             while (sc.hasNextLine()) {
-                String[] fields = sc.nextLine().split(",", -1);
+                // Values in quotes may have commas, e.g. "Lee, Ping"
+                ArrayList<String> fields =
+                        GradingResultsViewer.splitCsvLine(sc.nextLine());
 
-                if (fields.length >= 5
-                        && clean(fields[1]).equals(username)) {
-                    return new Student(clean(fields[0]), username,
-                            clean(fields[2]), clean(fields[3]),
-                            clean(fields[4]));
+                if (fields.size() >= 5
+                        && clean(fields.get(1)).equals(username)) {
+                    return new Student(clean(fields.get(0)), username,
+                            clean(fields.get(2)), clean(fields.get(3)),
+                            clean(fields.get(4)));
                 }
             }
         } catch (FileNotFoundException exception) {

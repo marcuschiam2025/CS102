@@ -1,14 +1,12 @@
 package checker;
 
+import exceptions.MissingEmailException;
+import exceptions.MissingNameException;
+import filehandling.FileHandlings;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-
-import exceptions.MissingEmailException;
-import exceptions.MissingNameException;
-// import checker.StructureChecker;
-import filehandling.FileHandlings;
 // Co-authored with ChatGPT
 
 public class MissingNameOrEmail {

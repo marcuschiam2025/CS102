@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 
 import fixer.UsernameResolver;
 
+// Co-authored with Claude
+
 // Plagiarism check 3: students whose code is very similar.
 //
 // Each file is turned into tokens with the names, numbers and strings
@@ -66,11 +68,32 @@ public class SimilarCodeChecker {
         return false;
     }
 
+    // Strings and chars are matched first, so a "//" or "/*" inside them
+    // (e.g. "http://smu.edu.sg") is not mistaken for a comment
+    private static final Pattern STRING_OR_COMMENT = Pattern.compile(
+            "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'"
+                    + "|//[^\\n]*|(?s:/\\*.*?\\*/)");
+
+    // Replaces each comment with a space and keeps strings as they are
+    static String removeComments(String source) {
+        Matcher matcher = STRING_OR_COMMENT.matcher(source);
+        StringBuilder result = new StringBuilder();
+
+        while (matcher.find()) {
+            String match = matcher.group();
+            String replacement = match.startsWith("/") ? " " : match;
+            matcher.appendReplacement(result,
+                    Matcher.quoteReplacement(replacement));
+        }
+
+        matcher.appendTail(result);
+        return result.toString();
+    }
+
     // Takes out the comments, then turns the code into tokens,
     // e.g. "int total = 0;" -> [int, ID, =, N, ;]
     static ArrayList<String> tokenize(String source) {
-        source = source.replaceAll("(?s)/\\*.*?\\*/", " ")
-                .replaceAll("//[^\\n]*", " ");
+        source = removeComments(source);
 
         ArrayList<String> tokens = new ArrayList<>();
         Matcher matcher = TOKEN.matcher(source);

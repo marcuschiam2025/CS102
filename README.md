@@ -4,16 +4,18 @@ A desktop (Swing) application that grades a batch of student exam submissions
 (ZIP files) in one go. For each submission it:
 
 1. **Unzips** it into its own folder.
-2. **Checks** it against the exam template (`RenameToYourUsername`): folder name,
-   folder hierarchy, missing/extra files, and the `Name:` / `Email ID:` header in
+2. **Checks** it against the exam template (`RenameToYourUsername`): folder name
+   (it must be the username from the ZIP name), folder hierarchy, missing/extra files, and the `Name:` / `Email ID:` header in
    every `.java` file. Each problem is returned as an exception.
 3. **Fixes** what it can, based on the exceptions found: renames the top folder to
    the username, moves `Q1`/`Q2`/`Q3` into a username folder, moves misplaced files,
    deletes junk (`.DS_Store`, `__MACOSX`, old `.class` files) and adds missing
    name/email headers.
 4. **Grades** it by compiling and running the instructor's tester files with a time
-   limit. A program that runs too long (e.g. an infinite loop) is stopped, and the
-   testers are then run one by one so only the cases that hang lose marks.
+   limit. A program that runs too long (e.g. an infinite loop) is stopped. If that
+   happens, or some code does not compile, the testers are run one by one so only
+   the affected cases lose marks. Each case is marked as passed, failed, compile
+   error, runtime error, timeout or missing file.
 5. **Exports** the totals to a CSV in the score sheet format.
 
 It can also **check for plagiarism** across all graded submissions.
@@ -57,7 +59,7 @@ did.
 | Export CSV | Writes the graded students' totals to `output/ScoreSheet-graded.csv` in the score sheet format. The original score sheet is **not** changed. |
 | Run all steps | Runs check, fix and grade on every submission in one go. |
 | Run all on one | Lets you pick one ZIP file and runs all the steps on it. |
-| Check plagiarism | Runs the two plagiarism checks (see below). Grade first. |
+| Check plagiarism | Runs the three plagiarism checks (see below). Grade first. |
 | Settings | Change the submissions folder, tester files folder, score sheet and student result template. Invalid entries are rejected and the old value is kept. |
 
 Steps 1–3 run on every ZIP in the submissions folder and show progress
@@ -75,6 +77,10 @@ A typical session is **1 → 2 → 3 → View results → Export CSV**, or
    left a question unchanged) are ignored. Highest score first.
 2. **Foreign headers:** a file whose `Email ID:` header has another student's
    username. This reads the original ZIPs, because the fixer rewrites the header.
+3. **Similar code:** pairs of students whose code in the same file is at least
+   80% alike. Variable names, numbers and strings are ignored, so renaming does
+   not hide copying, and the exam template's code is taken out first. This also
+   reads the original ZIPs. Most similar first.
 
 ### Default settings
 
@@ -142,7 +148,8 @@ src/
 ├── grading/          Grading: compiles and runs the testers with a time limit;
 │                     GradingResultsViewer: results table and CSV export
 ├── plagiarism/       WrongOutputChecker (shared wrong answers), HeaderChecker (foreign
-│                     headers), PlagiarismReport (formats both reports)
+│                     headers), SimilarCodeChecker (similar code), PlagiarismReport
+│                     (formats the reports)
 ├── model/            Student, StudentResult, QuestionResult, CaseResultStatus, Tester
 ├── filehandling/     FileHandlings: unzipping (zip-slip protection, empty/corrupt ZIP
 │                     detection) and folder deletion
