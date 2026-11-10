@@ -258,7 +258,7 @@ public class Grading {
         }
         
         for (String questionId : questionAndCaseIds.keySet()) {
-            new File(questionFolder + "/" + questionId).delete();
+            new File(questionFolder + "\\" + questionId.replaceAll("(?<=Q\\d+).+", "") + "\\" + questionId + ".class").delete();
         }
 
         outputFile.delete();
