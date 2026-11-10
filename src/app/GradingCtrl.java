@@ -256,21 +256,20 @@ public class GradingCtrl {
 
         ArrayList<Exception> found = foundProblems.get(zipFile.getPath());
 
-        if (found.isEmpty()) {
-            report.add("Nothing to fix.");
-        } else {
-            File extractFolder = extractFolderOf(zipFile);
-            ArrayList<String> fixes = SubmissionFixer.repairSubmission(
-                    zipFile.getPath(), extractFolder.getPath(), modelFolder,
-                    found);
+        File extractFolder = extractFolderOf(zipFile);
+        ArrayList<String> fixes = SubmissionFixer.repairSubmission(
+                zipFile.getPath(), extractFolder.getPath(), modelFolder,
+                found);
 
-            if (fixes.isEmpty()) {
+        if (fixes.isEmpty()) {
+            if (found.isEmpty()) {
+                report.add("Nothing to fix.");
+            } else {
                 report.add("Nothing could be fixed automatically.");
             }
-
-            report.addAll(fixes);
         }
 
+        report.addAll(fixes);
         fixedSubmissions.add(zipFile.getPath());
         return report;
     }

@@ -48,8 +48,6 @@ public class SubmissionFixer {
         //    for the student's folder
         if (hasProblem(foundProblems, AdditionalFileException.class)) {
             JunkFileCleaner.junkCleaner(root, messages, fixProblems);
-            JunkFileCleaner.extraFileCleaner(usernameFolder,
-                    new File(modelFolder), messages);
         }
 
         // 2. Pull Q1/Q2/Q3 out of any extra folders, e.g.
@@ -85,6 +83,12 @@ public class SubmissionFixer {
             }
         }
 
+        // Compare after the layout has been repaired, so nested question
+        // folders are moved into place before model-only cleanup.
+        if (usernameFolder.isDirectory()) {
+            JunkFileCleaner.extraFileCleaner(usernameFolder,
+                    new File(modelFolder), messages);
+        }
 
         for (Exception problem : fixProblems) {
             messages.add("Could not fix: " + problem.getMessage());
