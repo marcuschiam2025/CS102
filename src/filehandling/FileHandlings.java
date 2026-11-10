@@ -1,4 +1,4 @@
-package fileHandling;
+package file;
 
 import java.io.EOFException;
 import java.io.File;
