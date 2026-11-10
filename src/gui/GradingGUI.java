@@ -16,7 +16,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
-import model.StudentResult;
 import plagiarism.ForeignHeader;
 import plagiarism.PlagiarismReport;
 import plagiarism.SharedWrongOutputPair;
@@ -69,10 +68,22 @@ public class GradingGUI {
     public void show() {
         // EXIT_ON_CLOSE ends this program and all its threads, but not the
         // java/javac processes grading started (Windows keeps them running).
-        // This runs as the program exits and stops any that are left.
-        Runtime.getRuntime().addShutdownHook(new Thread(() ->
-                ProcessHandle.current().descendants()
-                        .forEach(ProcessHandle::destroyForcibly)));
+        // This runs as the program exits and stops any that are left,
+        // then deletes the files the program made (except output/).
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            ProcessHandle.current().descendants().forEach(process -> {
+                process.destroyForcibly();
+                // Wait for it to stop, or Windows won't let us delete
+                // the files it still has open
+                try {
+                    process.onExit().get(2, java.util.concurrent.TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    // could not wait, delete what we can anyway
+                }
+            });
+
+            ctrl.deleteGeneratedFiles();
+        }));
 
         SwingUtilities.invokeLater(() -> {
 
@@ -142,8 +153,8 @@ public class GradingGUI {
         runAllOnOneButton = addButton(buttonList, "Run all on one",
                 () -> runAllStepsOnOne());
         updateStepButtons();
-        addButton(buttonList, "Settings", () -> openSettings());
         addButton(buttonList, "Check plagiarism", () -> checkPlagiarism());
+        addButton(buttonList, "Settings", () -> openSettings());
 
         // Putting the grid at the NORTH of another panel stops the
         // buttons from stretching to fill the whole height
@@ -205,7 +216,7 @@ public class GradingGUI {
 
     private void gradeAllSubmissions() {
         runInBackground(() -> {
-            StudentResult.loadStudentResultTemplate();
+            ctrl.loadStudentResultTemplate();
             log("\n" + GRADING_NOTE);
             processAllSubmissions(ctrl::gradeSubmission);
         });
@@ -213,7 +224,7 @@ public class GradingGUI {
 
     private void runAllStepsOnAll() {
         runInBackground(() -> {
-            StudentResult.loadStudentResultTemplate();
+            ctrl.loadStudentResultTemplate();
             log("\n" + GRADING_NOTE);
             if (processAllSubmissions(ctrl::processSubmission)) {
                 checkDone = true;
@@ -231,7 +242,7 @@ public class GradingGUI {
         }
 
         runInBackground(() -> {
-            StudentResult.loadStudentResultTemplate();
+            ctrl.loadStudentResultTemplate();
             log("\n" + GRADING_NOTE);
             log("\n" + zipFile.getName());
 

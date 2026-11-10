@@ -68,7 +68,7 @@ public class Grading {
             ArrayList<String> commands = new ArrayList<>();
             commands.add("javac");
             commands.add("-cp");
-            commands.add("src" + File.pathSeparator + file.getParent());
+            commands.add("classes" + File.pathSeparator + file.getParent());
             commands.add("-d");
             commands.add(file.getParent());
             commands.add(file.getPath());
@@ -106,7 +106,7 @@ public class Grading {
                 commands.add("java");
                 commands.add("-cp");
                 // File.pathSeparator co-authored with Claude
-                commands.add("src" + File.pathSeparator + testerFile.getParent());
+                commands.add("classes" + File.pathSeparator + testerFile.getParent());
                 commands.add(testerFile + "");
 
                 questionPb.command(commands);
@@ -208,7 +208,7 @@ public class Grading {
 
         commands.add("javac");
         commands.add("-cp");
-        commands.add("src" + classPath);
+        commands.add("classes" + classPath);
         commands.add(questionFolders + "/QuestionTester.java");
 
         questionPb.command(commands);
@@ -234,7 +234,7 @@ public class Grading {
 
         commands.add("java");
         commands.add("-cp");
-        commands.add("src" + classPath);
+        commands.add("classes" + classPath);
         commands.add(questionFolders + "/QuestionTester.java");
 
         questionPb.command(commands);
@@ -320,7 +320,7 @@ public class Grading {
     }
 
     public static void main(String[] args) {
-        StudentResult.loadStudentResultTemplate();
+        StudentResult.loadStudentResultTemplate("Project sample/StudentResultTemplate.csv");
         Student student = new Student("a", "a", "a", "a", "a");
         // make sure it traverses until it reaches Q1/Q2/Q3 etc.
         File questionFolder = new File("src\\unzippedFolder\\2023-2024-fen.lai.2022.zip\\RenameToYourStudentID");
