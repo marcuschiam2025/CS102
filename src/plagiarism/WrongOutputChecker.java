@@ -13,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import fileHandling.FileHandlings;
+import filehandling.FileHandlings;
 import fixer.UsernameResolver;
 import grading.Grading;
 import model.Student;

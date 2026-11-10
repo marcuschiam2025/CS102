@@ -1,6 +1,6 @@
 package app;
 
-import fileHandling.FileHandlings;
+import filehandling.FileHandlings;
 import fixer.SubmissionFixer;
 import java.io.File;
 import java.io.FileNotFoundException;

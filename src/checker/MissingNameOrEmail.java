@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import exceptions.MissingEmailException;
 import exceptions.MissingNameException;
 // import checker.StructureChecker;
-import fileHandling.FileHandlings;
+import filehandling.FileHandlings;
 // Co-authored with ChatGPT
 
 public class MissingNameOrEmail {
