@@ -129,7 +129,7 @@ public class Grading {
         // 4. Run all cases in the question folder (to make the program faster)
         boolean allCasesSuccess = false;
         if (generateSuccess) {
-            allCasesSuccess = runAllCases(studentResult, questionId, caseIds, testerNames, questionFolder, timeLimitSeconds);
+            allCasesSuccess = runAllCases(studentResult, questionId, caseIds, questionFolder, timeLimitSeconds);
         }
 
         // 5. If step 4 fails, run each case on its own
@@ -139,11 +139,15 @@ public class Grading {
                         testerNames.get(i), questionFolder, timeLimitSeconds);
             }
         }
+
+        // 6. Cleanup all tester files to prepare for next one (to prevent wrong marking)
+        cleanupTesters(questionFolder, testerNames,
+            questionId, generateSuccess);
     }
 
+    // generate a tester file for the question
     private static boolean generateQuestionTester(String questionId,
         File questionFolder, ArrayList<String> testerNames) {
-        // generate a tester file for the question
         String questionTesterName = questionId + "Tester.java";
         File questionTester = new File(questionFolder, questionTesterName);
         try (PrintStream ps = new PrintStream(questionTester)) {
@@ -176,12 +180,14 @@ public class Grading {
         command.add("." + File.pathSeparator + getGraderClassPath());
 
         for (String testerName : testerNames) {
-            command.add(testerName + ".java");
+            command.add(questionFolder.getAbsolutePath() + "/"
+            + testerName + ".java");
         }
 
         // also compile question tester if generating was successful
         if (generateSuccess) {
-            command.add(questionId + "Tester.java");
+            command.add(questionFolder.getAbsolutePath() + "/"
+            + questionId + "Tester.java");
         }
 
         ProcessBuilder pb = new ProcessBuilder(command);
@@ -193,7 +199,7 @@ public class Grading {
     }
 
     private static boolean runAllCases(StudentResult studentResult,
-            String questionId, ArrayList<String> caseIds, ArrayList<String> testerNames,
+            String questionId, ArrayList<String> caseIds,
             File questionFolder, int timeLimitSeconds)
             throws IOException, InterruptedException {
         File outputFile = new File(questionFolder,
@@ -381,6 +387,23 @@ public class Grading {
         }
     }
 
+    // cleanup all tester files and question class files
+    private static void cleanupTesters(File questionFolder,
+            ArrayList<String> testerNames,
+            String questionId, boolean generateSuccess) {
+        for (String testerName : testerNames) {
+            new File(questionFolder, testerName + ".java").delete();
+            new File(questionFolder, testerName + ".class").delete();
+        }
+
+        new File(questionFolder, questionId + ".class").delete();
+
+        if (generateSuccess) {
+            new File(questionFolder, questionId + "Tester.java").delete();
+            new File(questionFolder, questionId + "Tester.class").delete();
+        }
+    }
+
     // The grader's own classpath with every entry made absolute, so the
     // testers can find model.Tester whichever folder they run from
     private static String getGraderClassPath() {
@@ -400,8 +423,8 @@ public class Grading {
     public static void main(String[] args) {
         StudentResult.loadStudentResultTemplate();
         StudentResult result = gradePaper(
-            new Student("#01400002", "chee.teo.2022", "Teo", "Chee", "chee.teo.2022@computing.smu.edu.sg"),
-            new File("unzippedFolder\\2023-2024-chee.teo.2022\\chee.teo.2022"),
+            new Student("#01400003", "david.2024", "Kong", "David", "david.kong.2024@computing.smu.edu.sg"),
+            new File("unzippedFolder\\2023-2024-david.2024\\david.2024"),
             "Project sample/TesterFiles",
             5
         );
