@@ -32,6 +32,7 @@ public class Grading {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+        System.out.println(output);
 
         return output;
     }
@@ -41,6 +42,7 @@ public class Grading {
             while (sc.hasNext()) {
                 String partDataRaw = sc.nextLine();
                 String[] partData = partDataRaw.split("(?<!\\[[^\\]]+),");
+                System.out.println(partDataRaw);
                 if (partData.length == 6) {
                     studentResult.addCaseResult(partData[0], partData[1], Double.parseDouble(partData[5]), (Boolean.parseBoolean(partData[4]) ? CaseResultStatus.PASSED : (partData[3].equals("(Runtime Error)") ? CaseResultStatus.RUNTIME_ERROR : CaseResultStatus.FAILED)), "");
                 }
@@ -231,7 +233,10 @@ public class Grading {
             }
         }
 
-        boolean success = runAllTesterFiles(questionAndCaseIds, questionFolder, testerFolder, timeLimitSeconds);
+        boolean success = false;
+        try {
+            success = runAllTesterFiles(questionAndCaseIds, questionFolder, testerFolder, timeLimitSeconds);
+        } catch (Exception e) {}
 
         ArrayList<File> existingQuestionFiles = new ArrayList<File>();
         for (File questionTesterFolder : questionFolder.listFiles()) {
@@ -271,7 +276,7 @@ public class Grading {
         StudentResult.loadStudentResultTemplate();
         Student student = new Student("a", "a", "a", "a", "a");
         // make sure it traverses until it reaches Q1/Q2/Q3 etc.
-        File questionFolder = new File("unzippedFolder\\2023-2024-chee.teo.2022\\chee.teo.2022");
+        File questionFolder = new File("src\\unzippedFolder\\2023-2024-fen.lai.2022.zip\\RenameToYourStudentID");
         String testerFolder = "Project sample/TesterFiles";
         int timeLimitSeconds = 5;
         System.out.println(Grading.gradePaper(student, questionFolder, testerFolder, timeLimitSeconds));
