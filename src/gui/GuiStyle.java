@@ -16,13 +16,14 @@ public class GuiStyle {
     public static final Color TEXT = Color.WHITE;
     public static final Color ERROR = new Color(255, 90, 90);
     public static final Color SUCCESS = new Color(120, 220, 120);
-    
+
     // Fonts
     public static final String FONT_NAME = "Arial";
     public static final Font TITLE_FONT = new Font(FONT_NAME, Font.BOLD, 24);
     public static final Font BUTTON_FONT = new Font(FONT_NAME, Font.BOLD, 14);
     public static final Font LABEL_FONT = new Font(FONT_NAME, Font.PLAIN, 14);
-    public static final Font OUTPUT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 17);
+    public static final Font OUTPUT_FONT =
+            new Font(Font.MONOSPACED, Font.PLAIN, 17);
 
     // Sizes
     public static final int GAP = 10;

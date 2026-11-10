@@ -1,7 +1,7 @@
 package exceptions;
 
 public class MissingEmailException extends RuntimeException {
-        public  MissingEmailException(String s){
-        super(s);
+    public MissingEmailException(String message) {
+        super(message);
     }
 }

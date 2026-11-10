@@ -41,7 +41,8 @@ public class FolderNameFixer {
             }
 
             if (usernameFolder.exists()) {
-                problems.add(new IOException("Cannot rename folder " + folder.getName()
+                problems.add(new IOException("Cannot rename folder "
+                        + folder.getName()
                         + ": destination folder " + username
                         + " already exists."));
                 continue;

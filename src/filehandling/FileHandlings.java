@@ -1,4 +1,4 @@
-package fileHandling;
+package filehandling;
 
 import java.io.EOFException;
 import java.io.File;
@@ -17,34 +17,34 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipInputStream;
 
 import exceptions.InvalidZipException;
-import fileClasses.FilesClass;
-import fileClasses.Folder;
 
 public class FileHandlings {
     // An empty ZIP file is only an "end of archive" record, which starts
     // with these bytes ("PK" 5 6)
     private static final byte[] EMPTY_ZIP_SIGNATURE = { 'P', 'K', 5, 6 };
 
-    public static ArrayList<String> readFiles(String delimeterPattern, String fileName) {
-        File f = new File(fileName);
+    public static ArrayList<String> readFiles(String delimiterPattern,
+            String fileName) {
+        File file = new File(fileName);
         ArrayList<String> values = new ArrayList<>();
-        try (Scanner sc = new Scanner(f);) {
-            sc.useDelimiter(delimeterPattern);
+
+        try (Scanner sc = new Scanner(file)) {
+            sc.useDelimiter(delimiterPattern);
             while (sc.hasNext()) {
-                String s = sc.next();
-                values.add(s);
+                String value = sc.next();
+                values.add(value);
             }
-            sc.close();
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundException exception) {
             System.out.println("The file is not found");
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
+            exception.printStackTrace();
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
         return values;
     }
 
-    public static void unzip(String zipFilePath, String destDirectory) throws IOException {
+    public static void unzip(String zipFilePath, String destDirectory)
+            throws IOException {
         Path targetDir = Paths.get(destDirectory).toAbsolutePath().normalize();
 
         // Create target directory if it doesn't exist
@@ -55,18 +55,21 @@ public class FileHandlings {
         String zipName = Paths.get(zipFilePath).getFileName().toString();
         int entryCount = 0;
 
-        try (InputStream fis = Files.newInputStream(Paths.get(zipFilePath));
-                ZipInputStream zis = new ZipInputStream(fis)) {
+        try (InputStream fileStream = Files.newInputStream(
+                Paths.get(zipFilePath));
+                ZipInputStream zis = new ZipInputStream(fileStream)) {
 
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 entryCount++;
-                // Resolve the target path for the current entry and normalize it
+
+                // Resolve the target path for the entry and normalize it
                 Path newPath = targetDir.resolve(entry.getName()).normalize();
                 // --- ZIP SLIP VULNERABILITY PROTECTION ---
-                // Ensure the entry path stays within the intended target directory
+                // Ensure the entry path stays inside the target directory
                 if (!newPath.startsWith(targetDir)) {
-                    throw new IOException("Malicious ZIP entry detected: " + entry.getName());
+                    throw new IOException("Malicious ZIP entry detected: "
+                            + entry.getName());
                 }
 
                 if (entry.isDirectory()) {
@@ -79,8 +82,10 @@ public class FileHandlings {
                         Files.createDirectories(parent);
                     }
 
-                    // Copy the input stream directly to the target file location
-                    Files.copy(zis, newPath, StandardCopyOption.REPLACE_EXISTING);
+                    // Copy the input stream directly to the target file
+
+                    Files.copy(zis, newPath,
+                            StandardCopyOption.REPLACE_EXISTING);
                 }
                 zis.closeEntry();
             }
@@ -111,7 +116,6 @@ public class FileHandlings {
             return Arrays.equals(start, signature);
         }
     }
-
 
     // Deletes a folder and everything inside it, if it exists
     public static void deleteFolder(File folder) {

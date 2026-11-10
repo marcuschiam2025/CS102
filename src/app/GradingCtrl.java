@@ -1,6 +1,6 @@
 package app;
 
-import fileHandling.FileHandlings;
+import filehandling.FileHandlings;
 import fixer.SubmissionFixer;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -51,7 +51,8 @@ public class GradingCtrl {
     private String submissionsFolder = "src/student-submission";
     private String testerFolder = "Project sample/TesterFiles";
     private String scoreSheetFile = "Project sample/IS442-ScoreSheet.csv";
-    private String studentResultTemplateFile = "Project sample/StudentResultTemplate.csv";
+    private String studentResultTemplateFile =
+            "Project sample/StudentResultTemplate.csv";
     private int timeLimitSeconds = DEFAULT_TIME_LIMIT;
 
     private ArrayList<StudentResult> studentResults = new ArrayList<>();
@@ -59,7 +60,8 @@ public class GradingCtrl {
     // What each step has done so far, by ZIP file path:
     // problems found by the last check (or left after fixing),
     // and the submissions that went through the fix step
-    private HashMap<String, ArrayList<Exception>> foundProblems = new HashMap<>();
+    private HashMap<String, ArrayList<Exception>> foundProblems =
+            new HashMap<>();
     private HashSet<String> fixedSubmissions = new HashSet<>();
 
     public String getSubmissionsFolder() {

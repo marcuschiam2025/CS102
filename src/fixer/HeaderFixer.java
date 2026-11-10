@@ -19,7 +19,8 @@ public class HeaderFixer {
     // A Name line that already has a name after the colon. A name the
     // student wrote themselves (e.g. a longer full name) is kept.
     private static final Pattern FILLED_NAME_LINE =
-            Pattern.compile("(?im)^[ \\t]*\\*?[ \\t]*Name[ \\t]*:[ \\t]*\\S.*$");
+            Pattern.compile("(?im)^[ \\t]*\\*?[ \\t]*Name[ \\t]*:"
+                    + "[ \\t]*\\S.*$");
 
     // A line like " * Email ID: ping.lee.2023", with at least one space
     // between "Email" and "ID"
