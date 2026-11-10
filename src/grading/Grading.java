@@ -243,6 +243,10 @@ public class Grading {
         for (File existingQuestionFile : existingQuestionFiles) {
             existingQuestionFile.delete();
         }
+        
+        for (String questionId : questionAndCaseIds.keySet()) {
+            new File(questionFolder + "/" + questionId).delete();
+        }
 
         outputFile.delete();
         errorFile.delete();
