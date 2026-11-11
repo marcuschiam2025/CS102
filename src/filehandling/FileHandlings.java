@@ -43,8 +43,7 @@ public class FileHandlings {
         return values;
     }
 
-    public static void unzip(String zipFilePath, String destDirectory)
-            throws IOException {
+    public static void unzip(String zipFilePath, String destDirectory) throws IOException {
         Path targetDir = Paths.get(destDirectory).toAbsolutePath().normalize();
 
         // Create target directory if it doesn't exist
