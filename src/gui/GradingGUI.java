@@ -16,10 +16,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
-import model.StudentResult;
 import plagiarism.ForeignHeader;
 import plagiarism.PlagiarismReport;
 import plagiarism.SharedWrongOutputPair;
+import plagiarism.SimilarCode;
 
 public class GradingGUI {
 
@@ -48,6 +48,12 @@ public class GradingGUI {
     private boolean checkDone = false;
     private boolean fixDone = false;
 
+    // Once the user starts step by step (step 1), the "Run all" buttons
+    // are locked so the two ways of grading are not mixed
+    private JButton runAllButton;
+    private JButton runAllOnOneButton;
+    private boolean stepByStep = false;
+
     private SettingGUI settings;
 
     // One grading step run on one submission, e.g. ctrl::checkSubmission.
@@ -61,11 +67,30 @@ public class GradingGUI {
     }
 
     public void show() {
+        // EXIT_ON_CLOSE ends this program and all its threads, but not the
+        // java/javac processes grading started (Windows keeps them running).
+        // This runs as the program exits and stops any that are left,
+        // then deletes the files the program made (except output/).
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            ProcessHandle.current().descendants().forEach(process -> {
+                process.destroyForcibly();
+                // Wait for it to stop, or Windows won't let us delete
+                // the files it still has open
+                try {
+                    process.onExit().get(2, java.util.concurrent.TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    // could not wait, delete what we can anyway
+                }
+            });
+
+            ctrl.deleteGeneratedFiles();
+        }));
+
         SwingUtilities.invokeLater(() -> {
 
             frame = new JFrame("Auto Grading System");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(900, 600);
+            frame.setSize(1400, 600);
             frame.setLocationRelativeTo(null);
             frame.setResizable(false);
             frame.getContentPane().setBackground(GuiStyle.BACKGROUND);
@@ -118,17 +143,19 @@ public class GradingGUI {
                 () -> fixAllSubmissions());
         gradeButton = addButton(buttonList, "3. Grade submissions",
                 () -> gradeAllSubmissions());
-        updateStepButtons();
 
         // Results
         addButton(buttonList, "View results", () -> viewResults());
         addButton(buttonList, "Export CSV", () -> exportResults());
 
         // Other
-        addButton(buttonList, "Run all steps", () -> runAllStepsOnAll());
-        addButton(buttonList, "Run all on one", () -> runAllStepsOnOne());
-        addButton(buttonList, "Settings", () -> openSettings());
+        runAllButton = addButton(buttonList, "Run all steps",
+                () -> runAllStepsOnAll());
+        runAllOnOneButton = addButton(buttonList, "Run all on one",
+                () -> runAllStepsOnOne());
+        updateStepButtons();
         addButton(buttonList, "Check plagiarism", () -> checkPlagiarism());
+        addButton(buttonList, "Settings", () -> openSettings());
 
         // Putting the grid at the NORTH of another panel stops the
         // buttons from stretching to fill the whole height
@@ -171,6 +198,8 @@ public class GradingGUI {
     // ---------------------------- Button actions ----------------------------
 
     private void checkAllSubmissions() {
+        stepByStep = true;
+
         runInBackground(() -> {
             if (processAllSubmissions(ctrl::checkSubmission)) {
                 checkDone = true;
@@ -188,7 +217,7 @@ public class GradingGUI {
 
     private void gradeAllSubmissions() {
         runInBackground(() -> {
-            StudentResult.loadStudentResultTemplate();
+            ctrl.loadStudentResultTemplate();
             log("\n" + GRADING_NOTE);
             processAllSubmissions(ctrl::gradeSubmission);
         });
@@ -196,7 +225,7 @@ public class GradingGUI {
 
     private void runAllStepsOnAll() {
         runInBackground(() -> {
-            StudentResult.loadStudentResultTemplate();
+            ctrl.loadStudentResultTemplate();
             log("\n" + GRADING_NOTE);
             if (processAllSubmissions(ctrl::processSubmission)) {
                 checkDone = true;
@@ -214,7 +243,7 @@ public class GradingGUI {
         }
 
         runInBackground(() -> {
-            StudentResult.loadStudentResultTemplate();
+            ctrl.loadStudentResultTemplate();
             log("\n" + GRADING_NOTE);
             log("\n" + zipFile.getName());
 
@@ -260,6 +289,10 @@ public class GradingGUI {
             //    itself, so it still runs if check 1 failed.
             ArrayList<ForeignHeader> foreignHeaders = ctrl.findForeignHeaders();
             log("\n" + PlagiarismReport.formatForeignHeaders(foreignHeaders));
+
+            // 3. Very similar code. Also reads the zips itself.
+            ArrayList<SimilarCode> similarCode = ctrl.findSimilarCode();
+            log("\n" + PlagiarismReport.formatSimilarCode(similarCode));
         });
     }
 
@@ -343,10 +376,13 @@ public class GradingGUI {
         }
     }
 
-    // Only unlock a step once the step before it has run
+    // Only unlock a step once the step before it has run, and lock the
+    // "Run all" buttons once step by step has started
     private void updateStepButtons() {
         fixButton.setEnabled(checkDone);
         gradeButton.setEnabled(fixDone);
+        runAllButton.setEnabled(!stepByStep);
+        runAllOnOneButton.setEnabled(!stepByStep);
     }
 
     // Lets the user pick one submission from a drop-down list.

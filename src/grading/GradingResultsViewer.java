@@ -11,6 +11,8 @@ import model.StudentResult;
 import model.Student;
 import model.QuestionResult;
 
+// Co-authored with Claude
+
 public class GradingResultsViewer {
     private static final String COLUMN = "%-8s";
     private static final String NAME_COLUMN = "%-16s";
@@ -21,17 +23,10 @@ public class GradingResultsViewer {
             + "Calculated Final Grade Numerator,"
             + "Calculated Final Grade Denominator,End-of-Line Indicator";
 
-    // Prints one row per student (sorted by username) with the score for
-    // each question and the total, e.g.
+    // Builds the results table, one row per student (sorted by username)
+    // with the score for each question and the total, e.g.
     //   Username         Name            Q1a     Q1b   ...  Total
     //   ping.lee.2023    PING LEE        3/3     3/3   ...  20/20
-    public static void viewResults(ArrayList<StudentResult> studentResults) {
-        System.out.println();
-        System.out.print(formatResults(studentResults));
-    }
-
-    // Builds the same table as viewResults as one String, one line per
-    // student, so the GUI can show it too
     public static String formatResults(
             ArrayList<StudentResult> studentResults) {
         if (studentResults.isEmpty()) {
@@ -94,6 +89,53 @@ public class GradingResultsViewer {
         return String.valueOf(score);
     }
 
+    // A value ready to put in a CSV file. A value with a comma, a quote or
+    // a new line is put in quotes, and its quotes are doubled, e.g.
+    // Lee, Ping -> "Lee, Ping" and say "hi" -> "say ""hi"""
+    public static String csvField(String value) {
+        if (value.contains(",") || value.contains("\"")
+                || value.contains("\n") || value.contains("\r")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+
+        return value;
+    }
+
+    // Splits one CSV line into its values, the opposite of csvField, e.g.
+    // #01,"Lee, Ping",x -> [#01, Lee, Ping, x]. Empty values are kept.
+    public static ArrayList<String> splitCsvLine(String line) {
+        ArrayList<String> fields = new ArrayList<>();
+        StringBuilder field = new StringBuilder();
+        boolean inQuotes = false;
+
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+
+            if (inQuotes) {
+                if (c == '"' && i + 1 < line.length()
+                        && line.charAt(i + 1) == '"') {
+                    // "" inside quotes is one quote
+                    field.append('"');
+                    i++;
+                } else if (c == '"') {
+                    inQuotes = false;
+                } else {
+                    field.append(c);
+                }
+            } else if (c == '"') {
+                inQuotes = true;
+            } else if (c == ',') {
+                fields.add(field.toString());
+                field.setLength(0);
+            } else {
+                field.append(c);
+            }
+        }
+
+        fields.add(field.toString());
+        return fields;
+    }
+
     // Returns true if the file was written, false if it could not be
     public static boolean exportCSV(ArrayList<StudentResult> studentResults,
             String scoreSheetFile) {
@@ -104,11 +146,11 @@ public class GradingResultsViewer {
             for (StudentResult studentResult : studentResults) {
                 Student student = studentResult.getStudent();
 
-                csvWriter.println("#" + student.getOrgDefinedId()
-                        + ",#" + student.getUsername().trim()
-                        + "," + student.getLastName().trim()
-                        + "," + student.getFirstName().trim()
-                        + "," + student.getEmail().trim()
+                csvWriter.println(csvField("#" + student.getOrgDefinedId())
+                        + "," + csvField("#" + student.getUsername().trim())
+                        + "," + csvField(student.getLastName().trim())
+                        + "," + csvField(student.getFirstName().trim())
+                        + "," + csvField(student.getEmail().trim())
                         + "," + studentResult.getTotalScore()
                         + "," + studentResult.getMaxTotalScore()
                         + ",#");

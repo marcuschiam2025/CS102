@@ -6,11 +6,15 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.regex.Pattern;
 
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import fixer.UsernameResolver;
+
+// Co-authored with Claude
 
 // Plagiarism check 2: another student's username inside a file.
 //
@@ -34,7 +38,8 @@ public class HeaderChecker {
         return usernames;
     }
 
-    private static ArrayList<String[]> readJavaFiles(File zipFile) throws IOException {
+    // Also used by SimilarCodeChecker. Each item is { entry name, text }.
+    static ArrayList<String[]> readJavaFiles(File zipFile) throws IOException {
         ArrayList<String[]> javaFiles = new ArrayList<>();
         try (ZipFile zip = new ZipFile(zipFile)) { // open the zip (auto-closed)
             for (ZipEntry entry : Collections.list(zip.entries())) {
@@ -56,9 +61,35 @@ public class HeaderChecker {
         return javaFiles;
     }
 
+    // Matches the username as a whole word, ignoring case.
+    // "david.2024" is found in "Email ID: david.2024@smu.edu.sg" or at the
+    // end of a sentence ("by david.2024."), but not inside "ian.david.2024".
+    private static Pattern wholeWordPattern(String username) {
+        return Pattern.compile("(?<!\\w)(?<!\\w\\.)" + Pattern.quote(username)
+                + "(?!\\w)(?!\\.\\w)", Pattern.CASE_INSENSITIVE);
+    }
+
+    // True if the line has the username as a whole word. The quick
+    // contains() check first skips the many lines that cannot match.
+    private static boolean containsUsername(String line, String username,
+            Pattern wholeWord) {
+        return line.toLowerCase().contains(username.toLowerCase())
+                && wholeWord.matcher(line).find();
+    }
+
+    private static boolean containsUsername(String line, String username) {
+        return containsUsername(line, username, wholeWordPattern(username));
+    }
+
     public static ArrayList<ForeignHeader> findForeignHeaders(File[] zipFiles) {
         ArrayList<ForeignHeader> found = new ArrayList<>();
         ArrayList<String> usernames = getUsernames(zipFiles);
+
+        // Each username's pattern is made once, not once per line
+        HashMap<String, Pattern> patterns = new HashMap<>();
+        for (String username : usernames) {
+            patterns.put(username, wholeWordPattern(username));
+        }
 
         for (File zip : zipFiles) {
             String owner = UsernameResolver.getUsername(zip.getPath());
@@ -81,7 +112,7 @@ public class HeaderChecker {
                         if (other.equals(owner)) {
                             continue;
                         }
-                        if (line.toLowerCase().contains(other.toLowerCase())) {
+                        if (containsUsername(line, other, patterns.get(other))) {
                             ForeignHeader fh = new ForeignHeader(owner, other, fileName, line.trim());
                             found.add(fh);
                         }

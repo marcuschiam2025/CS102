@@ -1,444 +1,398 @@
 package grading;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.nio.file.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import model.CaseResultStatus;
-import model.QuestionResult;
-import model.Student;
 import model.StudentResult;
+import model.Student;
+import model.CaseResultStatus;
 
-// Grades one student's submission, one test case at a time.
-//
-// For each question, e.g. Q1a, the case testers (Q1aPart1Tester.java,
-// Q1aPart2Tester.java, ...) are copied into the student's own question
-// folder (Q1) and compiled there together with the student's code. Each
-// case then runs as its own program with a time limit, so an infinite
-// loop or crash in one case only costs that case.
-//
-// Everything happens inside the student's folder, so nothing from one
-// student can affect another. The output is kept there for checking later,
-// e.g. Q1a_compile.txt and Q1aPart1Tester_output.txt.
+// Co-authored with Claude
+
 public class Grading {
+    public static File errorFile = new File("error.txt");
+    public static File outputFile = new File("output.txt");
+    // The compiled app (made by compile.bat / compile.sh), which holds
+    // model/Tester.class that every tester extends
+    private static final String CLASSES_FOLDER = "src/classes";
+
+    private static void copyTesterFiles(File testerFolder, File questionFolder) throws IOException {
+        for (File testerFile : testerFolder.listFiles()) {
+            File questionFile = new File(questionFolder, testerFolder.getName().replaceAll("(?<=Q\\d+).+", "") + "/" + testerFile.getName());
+            
+            if (testerFile.getName().endsWith(".java") || testerFile.getName().endsWith(".class")) {
+                Files.copy(testerFile.toPath(), questionFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+    }
+
+    private static ArrayList<String> readErrorFile() {
+        ArrayList<String> output = new ArrayList<>();
+
+        try (Scanner sc = new Scanner(errorFile);) {
+            while (sc.hasNext()) {
+                output.add(sc.nextLine());
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return output;
+    }
+
+    // A result line is: question,case,expected,actual,passed,points
+    // e.g. "Q1a,2,[alice, ben],[alice],false,0.0". The question and case are
+    // read from the start and passed/points from the end, so commas inside
+    // expected/actual (e.g. "{a=1, b=2}") do not matter. Anything the
+    // student's code printed before the result on the same line is skipped.
+    private static final Pattern RESULT_LINE = Pattern.compile(
+            "^.*?(Q\\d+[a-z]?),(\\d+),(.*),(true|false),(-?\\d+(?:\\.\\d+)?)$");
     private static final String RUNTIME_ERROR_TEXT = "(Runtime Error)";
 
-    // Grades every case in the question template, which must be loaded
-    // first (StudentResult.loadStudentResultTemplate).
-    // usernameFolder is the folder that holds Q1, Q2 and Q3.
-    public static StudentResult gradePaper(Student student,
-            File usernameFolder, String testerFolder, int timeLimitSeconds) {
-        StudentResult studentResult = new StudentResult(student);
-        HashMap<String, ArrayList<String>> questionAndCaseIds = studentResult
-                .getQuestionAndCaseIds();
+    // Reads the tester output and returns how many results it found
+    private static int readOutputFile(StudentResult studentResult) {
+        int resultCount = 0;
 
-        for (Map.Entry<String, ArrayList<String>> question
-                : questionAndCaseIds.entrySet()) {
-            String questionId = question.getKey();
-            ArrayList<String> caseIds = question.getValue();
+        try (Scanner sc = new Scanner(outputFile);) {
+            while (sc.hasNextLine()) {
+                Matcher result = RESULT_LINE.matcher(sc.nextLine().trim());
 
-            try {
-                gradeQuestion(studentResult, questionId, caseIds,
-                        usernameFolder, new File(testerFolder),
-                        timeLimitSeconds);
-            } catch (IOException exception) {
-                setAllCases(studentResult, questionId, caseIds,
-                        CaseResultStatus.RUNTIME_ERROR,
-                        "Could not grade: " + exception.getMessage());
-            } catch (InterruptedException exception) {
-                // Grading was stopped, so leave the rest ungraded
-                Thread.currentThread().interrupt();
-                break;
+                if (!result.matches()) {
+                    continue;
+                }
+
+                CaseResultStatus status;
+                if (Boolean.parseBoolean(result.group(4))) {
+                    status = CaseResultStatus.PASSED;
+                } else if (result.group(3).endsWith(RUNTIME_ERROR_TEXT)) {
+                    status = CaseResultStatus.RUNTIME_ERROR;
+                } else {
+                    status = CaseResultStatus.FAILED;
+                }
+
+                studentResult.addCaseResult(result.group(1), result.group(2), Double.parseDouble(result.group(5)), status, "");
+                resultCount++;
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return resultCount;
+    }
+
+    // javac's error formats: "Q1a.java:5: error: ';' expected" or a line
+    // starting with "error:", e.g. "error: compilation failed". An exception
+    // message such as "parse error: bad input" does not match either.
+    private static final Pattern COMPILE_ERROR_LINE = Pattern.compile(
+            "^error: .*|.*\\.java:\\d+: error: .*");
+
+    // True if the error output shows the code did not compile
+    private static boolean hasCompileError(ArrayList<String> errorText) {
+        for (String line : errorText) {
+            if (COMPILE_ERROR_LINE.matcher(line).matches()) {
+                return true;
             }
         }
 
-        return studentResult;
+        return false;
     }
 
-    private static void gradeQuestion(StudentResult studentResult,
-            String questionId, ArrayList<String> caseIds,
-            File usernameFolder, File testerFolder, int timeLimitSeconds)
-            throws IOException, InterruptedException {
-        // e.g. Q1a and Q1b are both in the Q1 folder
-        String folderName = questionId.replaceAll("(?<=Q\\d+).+", "");
-        File questionFolder = new File(usernameFolder, folderName);
-        File studentFile = new File(questionFolder, questionId + ".java");
+    // Compiles each student file (e.g. Q2a.java) on its own, so one file that
+    // does not compile (e.g. Q3.java) does not stop the others from compiling
+    private static void compileStudentFiles(File[] files, int timeLimitSeconds) {
+        for (File file : files) {
+            String fileName = file.getName();
 
-        if (!studentFile.isFile()) {
-            setAllCases(studentResult, questionId, caseIds,
-                    CaseResultStatus.MISSING_FILE,
-                    studentFile.getName() + " was not submitted");
-            return;
+            if (!fileName.endsWith(".java") || fileName.endsWith("Tester.java")) {
+                continue;
+            }
+
+            ArrayList<String> commands = new ArrayList<>();
+            commands.add("javac");
+            commands.add("-cp");
+            commands.add(CLASSES_FOLDER +File.pathSeparator + file.getParent());
+            commands.add("-d");
+            commands.add(file.getParent());
+            commands.add(file.getPath());
+
+            ProcessBuilder compilePb = new ProcessBuilder(commands);
+            compilePb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            compilePb.redirectError(ProcessBuilder.Redirect.DISCARD);
+
+            try {
+                Process process = compilePb.start();
+                if (!process.waitFor(timeLimitSeconds, TimeUnit.SECONDS)) {
+                    process.destroyForcibly();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
+    }
 
-        // 1. Copy the case testers next to the student's code
-        ArrayList<String> testerNames = new ArrayList<>();
+    // Keeps a copy of the tester output and errors in the question folder,
+    // e.g. Q1/Q1aTester_output.txt and Q1/Q1a_compile.txt, because
+    // output.txt and error.txt are deleted after grading.
+    // The plagiarism check for shared wrong answers reads these copies.
+    private static void saveOutput(File folder, String outputName, String questionId) {
+        try {
+            if (outputFile.exists()) {
+                Files.copy(outputFile.toPath(), new File(folder, outputName + "_output.txt").toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
 
-        for (String caseId : caseIds) {
-            String testerName = questionId + "Part" + caseId + "Tester";
-            File source = new File(new File(testerFolder, questionId),
-                    testerName + ".java");
-            File target = new File(questionFolder, testerName + ".java");
-
-            Files.copy(source.toPath(), target.toPath(),
-                    StandardCopyOption.REPLACE_EXISTING);
-            testerNames.add(testerName);
+            // Also marks the question as graded, even if nothing compiled
+            File compileFile = new File(folder, questionId + "_compile.txt");
+            if (errorFile.exists()) {
+                Files.copy(errorFile.toPath(), compileFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                compileFile.createNewFile();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
 
-        // Also copy the class files given with the exam (e.g. Shape.class,
-        // DataException.class), so a student who deleted them is not
-        // marked down for it
-        File[] testerFiles = new File(testerFolder, questionId).listFiles();
+    private static void runTesterFiles(File[] testerFiles, File questionFolder, int timeLimitSeconds, StudentResult studentResult) {
+        // the testers below are run as source files, which does not compile the
+        // student's code, so compile it first
+        compileStudentFiles(testerFiles, timeLimitSeconds);
 
-        if (testerFiles != null) {
-            for (File testerFile : testerFiles) {
-                if (testerFile.getName().endsWith(".class")) {
-                    File target = new File(questionFolder,
-                            testerFile.getName());
-                    Files.copy(testerFile.toPath(), target.toPath(),
-                            StandardCopyOption.REPLACE_EXISTING);
+        for (File testerFile : testerFiles) {
+            if (testerFile.getName().endsWith("Tester.java")) {
+                ProcessBuilder questionPb = new ProcessBuilder();
+
+                String testerName = testerFile.getName();
+
+                ArrayList<String> commands = new ArrayList<>();
+                commands.add("java");
+                commands.add("-cp");
+                commands.add(CLASSES_FOLDER +File.pathSeparator + testerFile.getParent());
+                commands.add(testerFile + "");
+
+                questionPb.command(commands);
+
+                questionPb.redirectOutput(outputFile);
+                questionPb.redirectError(errorFile);
+
+                boolean success = false;
+
+                try {
+                    Process process = questionPb.start();
+                    // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
+                    success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
+
+                    if (!success) {
+                        // Still running after the time limit, so stop it
+                        process.destroyForcibly();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                // e.g. Q1aPart2Tester.java -> Q1/Q1aPart2Tester_output.txt
+                saveOutput(testerFile.getParentFile(), testerName.replaceAll("\\.java$", ""), testerName.replaceAll("Part\\d+Tester.java$", ""));
+
+                String questionId = testerName.replaceAll("Part\\d+Tester.java$", "");
+                String caseId = testerName.replaceAll("^Q.+Part(?=\\d+Tester\\.java)|Tester\\.java", "");
+
+                if (!success) {
+                    studentResult.addCaseResult(questionId, caseId, 0.0, CaseResultStatus.TIMEOUT, "");
+                    continue;
+                }
+
+                // Use the tester's result if it printed one, even if the
+                // student's code also printed to the error output (e.g.
+                // e.printStackTrace() for a missing file). With no result,
+                // the code either did not compile or threw an exception.
+                if (readOutputFile(studentResult) == 0) {
+                    CaseResultStatus status = hasCompileError(readErrorFile()) ? CaseResultStatus.COMPILE_ERROR : CaseResultStatus.RUNTIME_ERROR;
+                    studentResult.addCaseResult(questionId, caseId, 0.0, status, "");
+                }
+            }
+        }
+    }
+
+    public static boolean runAllTesterFiles(HashMap<String, ArrayList<String>> questionAndCaseIds, File questionFolders, String testerFolder, int timeLimitSeconds) {
+        File[] questionTesterFolders = new File(testerFolder).listFiles();
+        Path questionTesterPath = FileSystems.getDefault().getPath(questionFolders.getPath(), "QuestionTester.java");
+        // what happens when a question folder is missing? give 0 points
+        // The PrintStream below creates this file, or overwrites one left
+        // behind by an earlier run that crashed
+        File questionTester = questionTesterPath.toFile();
+
+        for (File questionTesterFolder : questionTesterFolders) {
+            String questionId = questionTesterFolder.getName();
+
+            if (questionAndCaseIds.containsKey(questionId)) {
+                try {
+                    copyTesterFiles(questionTesterFolder, questionFolders);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    continue;
                 }
             }
         }
 
-        // 2. Generate question tester folder for faster marking
-        boolean generateSuccess = generateQuestionTester(questionId,
-                questionFolder, testerNames);
+        try (PrintStream ps = new PrintStream(questionTester);) {
+            ps.println("public class QuestionTester { public static void main(String[] args) {");
 
-        // 3. Compile them once, together with the student's code
-        File compileFile = new File(questionFolder,
-                questionId + "_compile.txt");
+            for (Map.Entry<String, ArrayList<String>> question : questionAndCaseIds.entrySet()) {
+                for (String caseId : question.getValue()) {
+                    // Not every tester catches the student's exceptions, so
+                    // print a runtime error result here (Throwable also
+                    // catches errors such as StackOverflowError).
+                    // A LinkageError (e.g. NoClassDefFoundError) means the
+                    // student's class did not compile, so it is printed to
+                    // the error output instead, which makes gradePaper run
+                    // each tester on its own and mark it as a compile error.
+                    ps.println("try { new " + question.getKey() + "Part" + caseId + "Tester().grade(); } catch (LinkageError e) { e.printStackTrace(); } catch (Throwable e) { System.out.println(); System.out.println(\"" + question.getKey() + "," + caseId + ",-," + RUNTIME_ERROR_TEXT + ",false,0.0\"); }");
+                }
+            }
 
-        if (!compile(questionFolder, testerNames, compileFile,
-                questionId, generateSuccess)) {
-            setAllCases(studentResult, questionId, caseIds,
-                    CaseResultStatus.COMPILE_ERROR,
-                    firstErrorLine(compileFile));
-            return;
+            ps.println("} }");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
 
-        // 4. Run all cases in the question folder (to make the program faster)
-        boolean allCasesSuccess = false;
-        if (generateSuccess) {
-            allCasesSuccess = runAllCases(studentResult, questionId, caseIds,
-                    questionFolder, timeLimitSeconds);
+        ProcessBuilder questionPb = new ProcessBuilder();
+
+        ArrayList<String> commands = new ArrayList<>();
+
+        String classPath = "";
+        for (File questionFolder : Arrays.asList(questionFolders.listFiles())) {
+            classPath += File.pathSeparator + questionFolder;
         }
 
-        // 5. If step 4 fails, run each case on its own
-        if (!allCasesSuccess) {
-            for (int i = 0; i < caseIds.size(); i++) {
-                runCase(studentResult, questionId, caseIds.get(i),
-                        testerNames.get(i), questionFolder, timeLimitSeconds);
+        commands.add("javac");
+        commands.add("-cp");
+        commands.add(CLASSES_FOLDER +classPath);
+        commands.add(questionFolders + "/QuestionTester.java");
+
+        questionPb.command(commands);
+        
+        try {
+            Process process = questionPb.start();
+            // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
+            if (!process.waitFor(timeLimitSeconds, TimeUnit.SECONDS)) {
+                // Still running after the time limit, so stop it
+                process.destroyForcibly();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        questionPb = new ProcessBuilder();
+
+        commands = new ArrayList<>();
+
+        commands.add("java");
+        commands.add("-cp");
+        commands.add(CLASSES_FOLDER +classPath);
+        commands.add(questionFolders + "/QuestionTester.java");
+
+        questionPb.command(commands);
+
+        questionPb.redirectOutput(outputFile);
+        questionPb.redirectError(errorFile);
+
+        boolean success = false;
+
+        try {
+            Process process = questionPb.start();
+            // waitFor() idea modified from stack overflow (https://stackoverflow.com/questions/13938695/waiting-for-process-to-end-in-java)
+            success = process.waitFor(timeLimitSeconds, TimeUnit.SECONDS);
+
+            if (!success) {
+                // Still running after the time limit, so stop it
+                process.destroyForcibly();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        questionTester.delete();
+        new File(questionTester.getPath().replaceAll("\\.java", "\\.class")).delete();
+
+        return success;
+    }
+
+    public static StudentResult gradePaper(Student student, File questionFolder, String testerFolder, int timeLimitSeconds) {
+        StudentResult studentResult = new StudentResult(student);
+        HashMap<String, ArrayList<String>> questionAndCaseIds = studentResult.getQuestionAndCaseIds();
+
+        boolean success = false;
+        try {
+            success = runAllTesterFiles(questionAndCaseIds, questionFolder, testerFolder, timeLimitSeconds);
+        } catch (Exception e) {}
+
+        ArrayList<File> existingQuestionFiles = new ArrayList<File>();
+        for (File questionTesterFolder : questionFolder.listFiles()) {
+            for (File questionFile : questionTesterFolder.listFiles()) {
+                if (questionFile.getName().endsWith("Tester.java")) {
+                    existingQuestionFiles.add(questionFile);
+                    existingQuestionFiles.add(new File(questionFile.getPath().replaceAll("\\.java", "\\.class")));
+                }
             }
         }
 
-        // 6. Cleanup all tester files to prepare for next one
-        // (to prevent wrong marking)
-        cleanupTesters(questionFolder, testerNames,
-                questionId, generateSuccess);
-    }
-
-    // generate a tester file for the question
-    private static boolean generateQuestionTester(String questionId,
-            File questionFolder, ArrayList<String> testerNames) {
-        String questionTesterName = questionId + "Tester.java";
-        File questionTester = new File(questionFolder, questionTesterName);
-        try (PrintStream ps = new PrintStream(questionTester)) {
-            // generate public class, psvm
-            ps.println("public class " + questionId + "Tester {");
-            ps.println("public static void main(String[] args) {");
-            // run tester grade
-            for (String testerName : testerNames) {
-                ps.println("new " + testerName + "().grade();");
+        // if compilation error, individually mark each file
+        ArrayList<String> errorText = readErrorFile();
+        // Checks every line for the text, instead of a whole line equal to
+        // "Error"
+        boolean hasError = hasCompileError(errorText);
+        for (String line : errorText) {
+            if (line.contains("Error")) {
+                hasError = true;
             }
-            // close
-            ps.println("}}");
-        } catch (FileNotFoundException exception) {
-            // skip marking all questions at once if it fails
-            return false;
         }
 
-        return true;
-    }
-
-    // Returns true if everything compiled without errors
-    private static boolean compile(File questionFolder,
-            ArrayList<String> testerNames, File compileFile,
-            String questionId, boolean generateSuccess)
-            throws IOException, InterruptedException {
-        ArrayList<String> command = new ArrayList<>();
-        command.add("javac");
-        // "." lets javac find the student's code next to the testers
-        command.add("-cp");
-        command.add("." + File.pathSeparator + getGraderClassPath());
-
-        for (String testerName : testerNames) {
-            command.add(questionFolder.getAbsolutePath() + "/"
-            + testerName + ".java");
-        }
-
-        // also compile question tester if generating was successful
-        if (generateSuccess) {
-            command.add(questionFolder.getAbsolutePath() + "/"
-            + questionId + "Tester.java");
-        }
-
-        ProcessBuilder pb = new ProcessBuilder(command);
-        pb.directory(questionFolder);
-        pb.redirectErrorStream(true);
-        pb.redirectOutput(compileFile);
-
-        return pb.start().waitFor() == 0;
-    }
-
-    private static boolean runAllCases(StudentResult studentResult,
-            String questionId, ArrayList<String> caseIds,
-            File questionFolder, int timeLimitSeconds)
-            throws IOException, InterruptedException {
-        File outputFile = new File(questionFolder,
-                questionId + "Tester_output.txt");
-
-        // Runs from the project folder (not the question folder), because
-        // the testers give their data files as paths from there,
-        // e.g. "Project sample/TesterFiles/personstester.txt"
-        String questionTesterName = questionId + "Tester";
-        ProcessBuilder pb = new ProcessBuilder("java", "-cp",
-                questionFolder.getAbsolutePath() + File.pathSeparator
-                        + getGraderClassPath(),
-                questionTesterName);
-        pb.redirectErrorStream(true);
-        pb.redirectOutput(outputFile);
-
-        Process process = pb.start();
-
-        if (!process.waitFor(timeLimitSeconds, TimeUnit.SECONDS)) {
-            // Still running after the time limit, so stop it
-            process.destroyForcibly();
-            process.waitFor();
-            return false;
-        }
-
-        List<String> resultLines = findResultLines(outputFile, questionId);
-
-        if (resultLines.size() == 0) {
-            // e.g. the student's code threw an exception the tester
-            // did not catch, so no result was printed
-            return false;
-        }
-
-        // A result line is: question,case,expected,actual,passed,marks
-        // The expected and actual values can contain commas themselves,
-        // so the fields are read from the end of the line.
-        // data is split between lines, so first split by \n
-        for (String resultLine : resultLines) {
-            String[] fields = resultLine.split(",");
-            String caseId = fields[1];
-            double marks = Double.parseDouble(fields[fields.length - 1]);
-            String actual = fields[fields.length - 3];
-            CaseResultStatus status;
-
-            if (marks > 0) {
-                status = CaseResultStatus.PASSED;
-            } else if (actual.equals(RUNTIME_ERROR_TEXT)) {
-                status = CaseResultStatus.RUNTIME_ERROR;
-            } else {
-                status = CaseResultStatus.FAILED;
+        if (!success || hasError) {
+            for (File questionTesterFolder : questionFolder.listFiles()) {
+                runTesterFiles(questionTesterFolder.listFiles(), questionFolder, timeLimitSeconds, studentResult);
             }
-
-            studentResult.addCaseResult(questionId, caseId, marks, status, "");
-        }
-        return true;
-    }
-
-    private static void runCase(StudentResult studentResult,
-            String questionId, String caseId, String testerName,
-            File questionFolder, int timeLimitSeconds)
-            throws IOException, InterruptedException {
-        File outputFile = new File(questionFolder,
-                testerName + "_output.txt");
-
-        // Runs from the project folder (not the question folder), because
-        // the testers give their data files as paths from there,
-        // e.g. "Project sample/TesterFiles/personstester.txt"
-        ProcessBuilder pb = new ProcessBuilder("java", "-cp",
-                questionFolder.getAbsolutePath() + File.pathSeparator
-                        + getGraderClassPath(),
-                testerName);
-        pb.redirectErrorStream(true);
-        pb.redirectOutput(outputFile);
-
-        Process process = pb.start();
-
-        if (!process.waitFor(timeLimitSeconds, TimeUnit.SECONDS)) {
-            // Still running after the time limit, so stop it
-            process.destroyForcibly();
-            process.waitFor();
-            studentResult.addCaseResult(questionId, caseId, 0.0,
-                    CaseResultStatus.TIMEOUT, "Took longer than "
-                            + timeLimitSeconds + " seconds");
-            return;
-        }
-
-        String resultLine = findResultLine(outputFile, questionId, caseId);
-
-        if (resultLine == null) {
-            // e.g. the student's code threw an exception the tester
-            // did not catch, so no result was printed
-            studentResult.addCaseResult(questionId, caseId, 0.0,
-                    CaseResultStatus.RUNTIME_ERROR,
-                    "No result was printed, see " + outputFile.getName());
-            return;
-        }
-
-        // A result line is: question,case,expected,actual,passed,marks
-        // The expected and actual values can contain commas themselves,
-        // so the fields are read from the end of the line.
-        String[] fields = resultLine.split(",");
-        double marks = Double.parseDouble(fields[fields.length - 1]);
-        String actual = fields[fields.length - 3];
-        CaseResultStatus status;
-
-        if (marks > 0) {
-            status = CaseResultStatus.PASSED;
-        } else if (actual.equals(RUNTIME_ERROR_TEXT)) {
-            status = CaseResultStatus.RUNTIME_ERROR;
         } else {
-            status = CaseResultStatus.FAILED;
-        }
+            readOutputFile(studentResult);
 
-        studentResult.addCaseResult(questionId, caseId, marks, status, "");
-    }
-
-    // Returns the tester's result line, or null if there is none.
-    // Anything else in the output (e.g. the student's own println
-    // messages) is ignored.
-    private static String findResultLine(File outputFile, String questionId,
-            String caseId) throws IOException {
-        Pattern resultPattern = Pattern.compile(
-                Pattern.quote(questionId + "," + caseId + ",")
-                        + ".*,.*,(true|false),\\d+(\\.\\d+)?");
-
-        // ISO-8859-1 can read any bytes, so unusual characters printed by
-        // the student's code cannot make reading fail
-        List<String> lines = Files.readAllLines(outputFile.toPath(),
-                StandardCharsets.ISO_8859_1);
-        String resultLine = null;
-
-        for (String line : lines) {
-            if (resultPattern.matcher(line.trim()).matches()) {
-                resultLine = line.trim();
+            // One output file holds every question, so give each question
+            // a copy, e.g. Q1/Q1aTester_output.txt
+            for (String questionId : questionAndCaseIds.keySet()) {
+                File folder = new File(questionFolder, questionId.replaceAll("(?<=Q\\d+).+", ""));
+                if (folder.isDirectory()) {
+                    saveOutput(folder, questionId + "Tester", questionId);
+                }
             }
         }
 
-        return resultLine;
-    }
-
-    // questionId only
-    private static List<String> findResultLines(File outputFile,
-            String questionId) throws IOException {
-        Pattern resultPattern = Pattern.compile(
-                Pattern.quote(questionId + ",")
-                        + "\\d+,.*,.*,(true|false),\\d+(\\.\\d+)?");
-
-        // ISO-8859-1 can read any bytes, so unusual characters printed by
-        // the student's code cannot make reading fail
-        List<String> lines = Files.readAllLines(outputFile.toPath(),
-                StandardCharsets.ISO_8859_1);
-        List<String> resultLines = new ArrayList<>();
-
-        for (String line : lines) {
-            if (resultPattern.matcher(line.trim()).matches()) {
-                resultLines.add(line.trim());
-            }
+        for (File existingQuestionFile : existingQuestionFiles) {
+            existingQuestionFile.delete();
+        }
+        
+        for (String questionId : questionAndCaseIds.keySet()) {
+            new File(questionFolder + "/" + questionId.replaceAll("(?<=Q\\d+).+", "") + "/" + questionId + ".class").delete();
         }
 
-        return resultLines;
-    }
+        outputFile.delete();
+        errorFile.delete();
 
-    // Returns the first compile error, e.g.
-    // "Q1a.java:18: error: cannot find symbol"
-    private static String firstErrorLine(File compileFile)
-            throws IOException {
-        List<String> lines = Files.readAllLines(compileFile.toPath(),
-                StandardCharsets.ISO_8859_1);
-
-        for (String line : lines) {
-            if (line.contains("error")) {
-                return line.trim();
-            }
-        }
-
-        return "Compile error, see " + compileFile.getName();
-    }
-
-    private static void setAllCases(StudentResult studentResult,
-            String questionId, ArrayList<String> caseIds,
-            CaseResultStatus status, String details) {
-        for (String caseId : caseIds) {
-            studentResult.addCaseResult(questionId, caseId, 0.0, status,
-                    details);
-        }
-    }
-
-    // cleanup all tester files and question class files
-    private static void cleanupTesters(File questionFolder,
-            ArrayList<String> testerNames,
-            String questionId, boolean generateSuccess) {
-        for (String testerName : testerNames) {
-            new File(questionFolder, testerName + ".java").delete();
-            new File(questionFolder, testerName + ".class").delete();
-        }
-
-        new File(questionFolder, questionId + ".class").delete();
-
-        if (generateSuccess) {
-            new File(questionFolder, questionId + "Tester.java").delete();
-            new File(questionFolder, questionId + "Tester.class").delete();
-        }
-    }
-
-    // The grader's own classpath with every entry made absolute, so the
-    // testers can find model.Tester whichever folder they run from
-    private static String getGraderClassPath() {
-        String[] entries = System.getProperty("java.class.path")
-                .split(File.pathSeparator);
-        ArrayList<String> absoluteEntries = new ArrayList<>();
-
-        for (String entry : entries) {
-            if (!entry.isEmpty()) {
-                absoluteEntries.add(new File(entry).getAbsolutePath());
-            }
-        }
-
-        return String.join(File.pathSeparator, absoluteEntries);
-    }
-
-    public static void main(String[] args) {
-        StudentResult.loadStudentResultTemplate();
-        Student student = new Student("#01400003", "david.2024", "Kong",
-                "David", "david.kong.2024@computing.smu.edu.sg");
-        File submission =
-                new File("unzippedFolder\\2023-2024-david.2024\\david.2024");
-        int timeLimitSeconds = 5;
-
-        StudentResult result = gradePaper(student, submission,
-                "Project sample/TesterFiles", timeLimitSeconds);
-
-        for (QuestionResult questionResult
-                : result.getQuestionResults().values()) {
-            System.out.println(questionResult.getCases());
-            System.out.println(questionResult.getScore());
-        }
-
-        System.out.println(result);
+        return studentResult;
     }
 }
