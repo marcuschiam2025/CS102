@@ -48,9 +48,8 @@ public class Grading {
     // read from the start and passed/points from the end, so commas inside
     // expected/actual (e.g. "{a=1, b=2}") do not matter. Anything the
     // student's code printed before the result on the same line is skipped.
-    // Coauthored with Claude
     private static final Pattern RESULT_LINE = Pattern.compile(
-            "^Q\\d+[a-z]?,\\d+,.*,(true|false),\\d+(\\.\\d+)?$");
+            "^.*?(Q\\d+[a-z]?),(\\d+),(.*),(true|false),(-?\\d+(?:\\.\\d+)?)$");
     private static final String RUNTIME_ERROR_TEXT = "(Runtime Error)";
 
     // Reads the tester output and returns how many results it found
