@@ -25,6 +25,7 @@ public class SettingGUI {
     private JTextField testerField;
     private JTextField scoreSheetField;
     private JTextField studentResultTemplateField;
+    private JTextField modelFolderField;
     private JLabel settingsMessage;
 
     public SettingGUI(GradingCtrl ctrl, Runnable onBack) {
@@ -37,11 +38,11 @@ public class SettingGUI {
         testerField.setText(ctrl.getTesterFolder());
         scoreSheetField.setText(ctrl.getScoreSheetFile());
         studentResultTemplateField.setText(ctrl.getStudentResultTemplateFile());
+        modelFolderField.setText(ctrl.getModelFolder());
         settingsMessage.setText(" ");
     }
 
     public JPanel createSettingsScreen() {
-
         JPanel page = new JPanel(new BorderLayout(GuiStyle.GAP, GuiStyle.GAP));
         page.setBackground(GuiStyle.BACKGROUND);
         page.setBorder(BorderFactory.createEmptyBorder(GuiStyle.GAP,
@@ -58,6 +59,7 @@ public class SettingGUI {
         testerField = new JTextField();
         scoreSheetField = new JTextField();
         studentResultTemplateField = new JTextField();
+        modelFolderField = new JTextField();
 
         // Option 1: submission folder path
         form.add(createRow("Submissions folder", submissionsField,
@@ -80,6 +82,10 @@ public class SettingGUI {
                 GuiStyle.createButton("Browse...",
                         () -> chooseCsvFile(studentResultTemplateField))));
 
+        form.add(createRow("Model Folder for Junk File/Misplaced Fixer",
+                modelFolderField,
+                GuiStyle.createButton("Browse...",
+                        () -> chooseFolder(modelFolderField))));
         // Keep the rows at their normal height (same trick as the sidebar)
         JPanel formHolder = new JPanel(new BorderLayout());
         formHolder.setBackground(GuiStyle.BACKGROUND);
@@ -174,6 +180,10 @@ public class SettingGUI {
         String templateFile = studentResultTemplateField.getText().trim();
         if (!ctrl.setStudentResultTemplateFile(templateFile)) {
             errors.add("student result template is not an existing .csv file");
+        }
+
+        if (!ctrl.setModelFolder(modelFolderField.getText().trim())) {
+            errors.add("model folder not found");
         }
 
         if (errors.isEmpty()) {

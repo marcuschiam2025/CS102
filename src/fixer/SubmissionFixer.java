@@ -71,8 +71,8 @@ public class SubmissionFixer {
             if (hasProblem(foundProblems, MissingFileException.class)
                     || hasProblem(foundProblems,
                             MissingFolderException.class)) {
-                MisplacedFileFixer.misplacedFileFix(usernameFolder, messages,
-                        fixProblems);
+                MisplacedFileFixer.misplacedFileFix(usernameFolder,
+                        new File(modelFolder), messages, fixProblems);
             }
 
             // 5. Fix the name/email comment in the .java files

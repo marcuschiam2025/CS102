@@ -60,7 +60,7 @@ did.
 | Run all steps | Runs check, fix and grade on every submission in one go. |
 | Run all on one | Lets you pick one ZIP file and runs all the steps on it. |
 | Check plagiarism | Runs the three plagiarism checks (see below). Grade first. |
-| Settings | Change the submissions folder, tester files folder, score sheet and student result template. Invalid entries are rejected and the old value is kept. |
+| Settings | Change the submissions folder, tester files folder, score sheet, student result template and model folder used for file cleanup/repair. Invalid entries are rejected and the old value is kept. |
 
 Steps 1–3 run on every ZIP in the submissions folder and show progress
 (`[3/6] ...`). **Fix** stays locked until **Check** has run, and **Grade** until
@@ -90,6 +90,7 @@ A typical session is **1 → 2 → 3 → View results → Export CSV**, or
 | Tester files folder | `Project sample/TesterFiles` |
 | Score sheet | `Project sample/IS442-ScoreSheet.csv` |
 | Student result template | `Project sample/StudentResultTemplate.csv` |
+| Model folder | `Project sample/RenameToYourUsername` |
 
 Each program gets a fixed **5-second** time limit while grading. This is not a
 setting.

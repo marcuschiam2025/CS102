@@ -83,6 +83,9 @@ public class GradingCtrl {
         return studentResultTemplateFile;
     }
 
+    public String getModelFolder() {
+        return modelFolder;
+    }
     // Loads the max scores from the template file chosen in the settings
     public void loadStudentResultTemplate() {
         StudentResult.loadStudentResultTemplate(studentResultTemplateFile);
@@ -133,6 +136,16 @@ public class GradingCtrl {
         }
 
         studentResultTemplateFile = file;
+        return true;
+    }
+
+    // Returns false (and keeps the old folder) if the model folder is invalid
+    public boolean setModelFolder(String folder) {
+        if (!isExistingFolder(folder)) {
+            return false;
+        }
+
+        modelFolder = folder;
         return true;
     }
 
