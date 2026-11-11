@@ -47,14 +47,14 @@ public class MissingNameOrEmail {
                 + path.getFileName();
 
         if (stringsOfRows.size() > NAME_LINE
-                && stringsOfRows.get(NAME_LINE).length()
+                && stringsOfRows.get(NAME_LINE).trim().length()
                         <= MIN_NAME_LINE_LENGTH) {
             arrayOfExceptions.add(new MissingNameException(
                     fileName + " does not have name inside the file"));
         }
 
         if (stringsOfRows.size() > EMAIL_LINE
-                && stringsOfRows.get(EMAIL_LINE).length()
+                && stringsOfRows.get(EMAIL_LINE).trim().length()
                         <= MIN_EMAIL_LINE_LENGTH) {
             arrayOfExceptions.add(new MissingEmailException(
                     fileName + " does not have email inside the file"));
