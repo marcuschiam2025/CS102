@@ -82,7 +82,7 @@ public class SettingGUI {
                 GuiStyle.createButton("Browse...",
                         () -> chooseCsvFile(studentResultTemplateField))));
 
-        form.add(createRow("Model Folder for Junk File/Misplaced Fixer",
+        form.add(createRow("Model Folder",
                 modelFolderField,
                 GuiStyle.createButton("Browse...",
                         () -> chooseFolder(modelFolderField))));
