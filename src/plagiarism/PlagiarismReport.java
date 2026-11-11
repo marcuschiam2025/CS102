@@ -1,7 +1,7 @@
 package plagiarism;
 
 import java.util.ArrayList;
-
+// Co-authored with Claude
 // Turns the plagiarism results into text, so the console menu and the
 // GUI show the same report.
 public class PlagiarismReport {

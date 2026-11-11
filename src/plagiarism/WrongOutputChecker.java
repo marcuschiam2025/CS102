@@ -17,7 +17,7 @@ import filehandling.FileHandlings;
 import fixer.UsernameResolver;
 import grading.Grading;
 import model.Student;
-
+// Co-authored with Claude
 // Plagiarism check 1: students who give the same wrong answer.
 //
 // Words used in this file:

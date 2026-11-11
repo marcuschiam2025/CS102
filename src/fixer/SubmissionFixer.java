@@ -23,6 +23,8 @@ import java.util.ArrayList;
 // Returns a message for every fix. Anything that could not be done is
 // added as "Could not fix: ...". The checker is run again afterwards
 // (in GradingCtrl) to report what is still wrong.
+
+// Co-authored with Claude and Co-pilot
 public class SubmissionFixer {
     private static final String[] QUESTIONS = { "Q1", "Q2", "Q3" };
 

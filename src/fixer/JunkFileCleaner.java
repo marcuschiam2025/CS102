@@ -5,7 +5,7 @@ import filehandling.FileHandlings;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-
+// Co-authored with Claude and Co-pilot
 public class JunkFileCleaner {
     private static final String MAC_FOLDER = "__MACOSX"; // edge case
     private static final String MAC_FILE = ".DS_Store";

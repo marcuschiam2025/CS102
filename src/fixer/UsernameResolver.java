@@ -2,7 +2,7 @@
 package fixer;
 
 import java.io.File;
-
+// Co-authored with Claude and Co-pilot
 public class UsernameResolver {
     private static final String ZIP_EXTENSION = ".zip";
     private static final String SEPARATOR = "-";

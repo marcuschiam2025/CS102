@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+// Co-authored with Claude and Co-pilot
 public class HeaderFixer {
     // A line like " * Name: Ping Lee": optional spaces, optional *,
     // then "Name" and ":" (any case)

@@ -4,7 +4,7 @@ package fixer;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-
+// Co-authored with Claude and Co-pilot
 public class HierarchyFixer {
 
     // Moves question folders found at the root into the username folder.

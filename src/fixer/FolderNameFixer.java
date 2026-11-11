@@ -4,7 +4,7 @@ package fixer;
 import java.io.IOException;
 import java.io.File;
 import java.util.ArrayList;
-
+// Co-authored with Claude and Co-pilot
 public class FolderNameFixer {
     private static final String QUESTION_FOLDER = "Q\\d+";
     private static final String MAC_FOLDER = "__MACOSX";

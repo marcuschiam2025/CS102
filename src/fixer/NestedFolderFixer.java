@@ -18,6 +18,8 @@ import java.util.LinkedList;
 //
 // Does nothing if the questions are already in the right place, or are
 // at the root (HierarchyFixer handles that case).
+
+// Co-authored with Claude and Co-pilot
 public class NestedFolderFixer {
     private static final String QUESTION_FOLDER = "Q\\d+";
     private static final String MAC_FOLDER = "__MACOSX";
